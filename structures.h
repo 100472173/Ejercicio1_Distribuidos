@@ -27,6 +27,11 @@ struct tupla {
     int valor2_N;
     double* valor2_value;
 };
-
+int s_init();
+int s_get_value();
+int s_set_value();
+int s_modify_value();
+int s_delete_key();
+int s_exist();
 
 #endif //EJERCICIO1_DISTRIBUIDOS_STRUCTURES_H
