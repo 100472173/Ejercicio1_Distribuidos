@@ -1,0 +1,2 @@
+1.- Podriamos hacer pool de hilos en vez de hilos bajo demanda
+2.- En vez de usar una lista de punteros para las tuplas, crear nuestras propias listas usando listas enlazadas

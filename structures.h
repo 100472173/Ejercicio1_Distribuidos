@@ -6,6 +6,7 @@
 #define EJERCICIO1_DISTRIBUIDOS_STRUCTURES_H
 
 #define MAX 256
+#define MAX_VECTOR 32
 
 struct peticion {
     int op;
@@ -25,13 +26,8 @@ struct tupla {
     int clave;
     char valor1[MAX];
     int valor2_N;
-    double* valor2_value;
+    double valor2_value[MAX_VECTOR];
 };
-int s_init();
-int s_get_value();
-int s_set_value();
-int s_modify_value();
-int s_delete_key();
-int s_exist();
+
 
 #endif //EJERCICIO1_DISTRIBUIDOS_STRUCTURES_H

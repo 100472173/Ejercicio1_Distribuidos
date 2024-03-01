@@ -8,14 +8,28 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdlib.h>
 
 pthread_mutex_t sync_mutex;
 bool sync_copied = false;
 pthread_cond_t sync_cond;
 mqd_t queue_servidor;
 
+/* La jugada es la siguiente. Primero vamos a inicializar en el main el almacen con espacio para max_tuplas.
+ * Luego, cuando vayamos a añadir una tupla comprobamos si el almacen esta lleno, si está lleno duplicamos
+ * la capacidad y hacemos un realloc para poder seguir metiendo tuplas. OJO MUCHO CUIDADO porque los accesos
+ * tanto al almacen como a las variables que controlan el numero de elementos y la capacidad deberían estar
+ * protegidas por algún mecanismo de sincronizacion y exlusión mutua. MIRAR ESTO MUY BIEN PARA NO LIARLA */
+struct tupla* almacen = NULL;
+int n_elementos = 0;
+int max_tuplas = 50;
+
+
+
 int main ( int argc, char *argv[] )
 {
+    // Inicializamos el almacén
+    almacen = (struct tupla*)malloc(max_tuplas*sizeof(struct tupla));
     // Inicializamos peticion y variables
     struct peticion p;
     unsigned int prio;
@@ -57,6 +71,7 @@ int main ( int argc, char *argv[] )
         // Contador para los hilos
         contador++;
     }
+    free(almacen);
     return 0;
 }
 
@@ -104,4 +119,29 @@ void tratar_peticion (struct peticion* p)
         }
     }
     pthread_exit(0) ;
+}
+
+
+int s_init() {
+
+}
+
+int s_get_value(int key, char *valor1, int valor2_N, double *valor2_value) {
+
+}
+
+int s_set_value(int key, char *valor1, int* valor2_N_p, double *valor2_value) {
+
+}
+
+int s_modify_value(int key, char *valor1, int valor2_N, double *valor2_value) {
+
+}
+
+int s_delete_key(int key) {
+
+}
+
+int s_exist(int key) {
+
 }
