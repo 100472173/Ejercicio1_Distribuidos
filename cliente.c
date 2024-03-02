@@ -17,7 +17,13 @@ int main(){
         fprintf(stderr, "Error al abrir la cola de mensajes.\n");
         return -1;
     }
-    // abir cola de mensajes para leer
+
+
+
+
+
+
+    /* // abir cola de mensajes para leer
     mqd_t queue_read;
     // modificar atributos cola
     struct mq_attr attr_read;
@@ -35,6 +41,6 @@ int main(){
         fprintf(stderr, "Error al borrar las tuplas.\n");
         return -1;
     }
-    return queue_read;
+    return queue_read; */
 
 }

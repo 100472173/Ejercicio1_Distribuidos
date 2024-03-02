@@ -97,6 +97,13 @@ int delete_key(int key);
  */
 int exist(int key);
 
+int open_server();
+
+int open_client();
+
+int send_server();
+
+int send_client();
 
 
 #endif //EJERCICIO1_DISTRIBUIDOS_CLAVES_H
