@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*
 // Puede haber problemas de concurrencia con mqd_t y struct mq_attr
 mqd_t queue_servidor, queue_cliente;
 struct mq_attr attr_servidor, attr_cliente;
@@ -20,7 +21,7 @@ size_t size_pet = sizeof(struct peticion);
 unsigned int prio_p = 0;
 size_t size_resp = sizeof(struct respuesta);
 unsigned int prio_r = 0;
-
+*/
 
 int init(){
     // abirir cola servidor
@@ -40,6 +41,34 @@ int init(){
 }
 
 int set_value(int key, char *value1, int N_value2, double *V_value2){
+    struct peticion p;
+    struct respuesta r;
+    mqd_t queue_servidor;
+    mqd_t queue_cliente;
+    char client_name[MAX];
+    // Diria que no hace falta hacer queue attr, es medio lioso ahora mismo, no entiendo muy bien
+
+    queue_servidor = mq_open("/SERVIDOR", O_CREAT|O_WRONLY, 0700, NULL) ;
+    if (queue_servidor == -1) {
+        return -1;
+    }
+
+    sprintf(client_name, "%s%d", "/CLIENTE_", getpid()) ;
+    queue_cliente = mq_open(client_name, O_CREAT|O_RDONLY) ;
+    if (queue_cliente == -1) {
+        mq_close(queue_servidor);
+        return -1;
+    }
+
+    // Rellenar la peticion
+    p.op = 1;
+    strcpy(p.q_name, client_name);
+    p.key = key;
+    strcpy(p.valor1, value1);
+    p.valor2_N = N_value2;
+    p.valor2_N_p = NULL;
+
+    /*
     // abirir cola servidor
     int open_s = open_server();
     // crear peticion
@@ -58,6 +87,7 @@ int set_value(int key, char *value1, int N_value2, double *V_value2){
     int rec = receive_client((char *)&res, size_resp, &prio_r);
     int exit_value = check_errors(open_c, open_s, send, rec);
     return exit_value;
+    */
 }
 
 int get_value(int key, char *value1, int *N_value2, double *V_value2){
@@ -149,6 +179,10 @@ int open_client(){
     }
     return queue_cliente;
 }
+
+
+
+
 // TODO: tal vez haya que cambiar el tema de los exits. habra que pensarlo
 int open_server(){
     // crear nombre cola
