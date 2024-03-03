@@ -1,7 +1,7 @@
 //
 // Created by linux-lex on 29/02/24.
 //
-
+#include <stddef.h>
 #ifndef EJERCICIO1_DISTRIBUIDOS_CLAVES_H
 #define EJERCICIO1_DISTRIBUIDOS_CLAVES_H
 
@@ -101,9 +101,10 @@ int open_server();
 
 int open_client();
 
-int send_server();
+int send_server(char *message, size_t size, unsigned int prio);
 
-int send_client();
+int receive_client(char *message, size_t size, unsigned int * prio);
 
+int check_errors(int open_c, int open_s, int send, int rec);
 
 #endif //EJERCICIO1_DISTRIBUIDOS_CLAVES_H

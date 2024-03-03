@@ -8,7 +8,20 @@
 
 
 int main(){
-    // abir cola de mensajes para escribir
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /* // abir cola de mensajes para escribir
     mqd_t queue_write;
     struct mq_attr attr_write;
     // modificar atributos de cola
@@ -17,13 +30,7 @@ int main(){
         fprintf(stderr, "Error al abrir la cola de mensajes.\n");
         return -1;
     }
-
-
-
-
-
-
-    /* // abir cola de mensajes para leer
+    // abir cola de mensajes para leer
     mqd_t queue_read;
     // modificar atributos cola
     struct mq_attr attr_read;

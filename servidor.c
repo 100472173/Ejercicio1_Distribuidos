@@ -35,12 +35,12 @@ int main ( int argc, char *argv[] )
     almacen = (struct tupla*)malloc(max_tuplas*sizeof(struct tupla));
     // Inicializamos peticion y variables
     struct peticion p;
-    unsigned int prio;
+    unsigned int prio = 0;
     int contador = 0;
     // Inicializamos los atributos de la cola
-    struct mq_attr attr_read;
-    attr_read.mq_maxmsg = 10;
-    attr_read.mq_msgsize = sizeof(struct peticion);
+    struct mq_attr attr_servidor;
+    attr_servidor.mq_maxmsg = 10;
+    attr_servidor.mq_msgsize = sizeof(struct peticion);
     // Inicializamos los hilos
     pthread_attr_t attr;
     pthread_t thid[MAX];
@@ -50,7 +50,7 @@ int main ( int argc, char *argv[] )
     pthread_mutex_init(&sync_mutex, NULL);
     pthread_cond_init(&sync_cond, NULL);
     // Abrimos la cola para lectura
-    queue_servidor = mq_open("/SERVIDOR", O_CREAT | O_RDONLY, 0700, &attr_read);
+    queue_servidor = mq_open("/SERVIDOR", O_CREAT | O_RDONLY, 0700, &attr_servidor);
     if (queue_servidor == -1){
         fprintf(stderr, "Error al crear la cola de mensajes.\n");
         return -1;
@@ -112,6 +112,7 @@ void tratar_peticion (struct peticion* p){
             break;
     }
     // Abrimos la cola del cliente
+    //TODO: falta darle los atributos
     mqd_t queue_cliente = mq_open(p_local.q_name, O_CREAT | O_WRONLY, 0700, NULL);
     if (queue_cliente == -1) {
         fprintf(stderr, "Error al abrir la cola de mensajes del cliente.\n");
@@ -221,7 +222,7 @@ int s_delete_key(int key) {
             // esto funciona si el orden de las tuplas no importa. Sino hay que cambiarlo
 
             // copiar ultimo elemento del almacen al indice
-            almacen[i] = almacen[n_elementos--];
+            almacen[i] = almacen[n_elementos-1];
             // borrar ultimo elemento del almacen
             size_t elementos = sizeof(struct tupla);
             memset(almacen + ((n_elementos-1)*sizeof(struct tupla)), 0, elementos);
