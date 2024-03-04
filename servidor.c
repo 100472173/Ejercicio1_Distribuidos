@@ -9,6 +9,11 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <dirent.h>
+#include <errno.h>
+#include <sys/stat.h>
 
 pthread_mutex_t sync_mutex;
 bool sync_copied = false;
@@ -33,6 +38,11 @@ int main ( int argc, char *argv[] )
 {
     // Inicializamos el almacén
     almacen = (struct tupla*)malloc(max_tuplas*sizeof(struct tupla));
+    // cargamos los datos del almacen
+    if (-1 == load()){
+        fprintf(stderr, "Error al cargar el almacen del archivo binary");
+        return -1;
+    }
     // Inicializamos peticion y variables
     struct peticion p;
     unsigned int prio = 0;
@@ -62,7 +72,7 @@ int main ( int argc, char *argv[] )
             fprintf(stderr, "Error al recibir la petición de la cola de mensajes.\n");
             return -1;
         }
-        if (pthread_create(&thid[contador], &attr, (void*)tratar_peticion, &p) != 0) {
+        if (pthread_create(&thid[contador], &attr, (void*)tratar_peticion, (struct perticion *) &p) != 0) {
             fprintf(stderr, "Error al crear el hilo.\n");
             return -1;
         }
@@ -137,7 +147,19 @@ int s_init() {
     // poner a 0 todos los elementos del almacen
     size_t elementos = max_tuplas * sizeof(struct tupla);
     memset(almacen, 0, elementos);
+    // borar todas las tuplas del almacen
+    char file[MAX];
+    getcwd(file, sizeof(file));
+    strcat(file, "/data_structure/almacen.txt");
+    // abrir fichero y sobrescribir sus contenidos
+    FILE * F = fopen(file, "wb");
+    // error al abrir el fichero
+    if (NULL == F){
+        return -1;
+    }
+    fclose(F);
     return 0;
+
 }
 
 int s_get_value(int key, char *valor1, int valor2_N, double *valor2_value) {
@@ -245,4 +267,63 @@ int s_exist(int key) {
     return existe;
 
     // falta la parte del error
+}
+int load(){
+    // obtener directorio
+    char cwd[MAX];
+    getcwd(cwd, sizeof(cwd));
+    // crear directorio si no existe
+    strcat(cwd, "/data_structure");
+    DIR * dir = opendir(cwd);
+    // existe el fichero
+    if (dir){
+        closedir(dir);
+    }
+    // no existe
+    if (ENOENT == errno){
+        mkdir(cwd, 0777);
+    }
+    // path del archivo
+    char file[MAX];
+    strcpy(file, cwd);
+    strcat(file, "almacen.txt");
+
+    // abrir descriptor de fichero
+    FILE *F = fopen(file, "rb");
+    // comprobar error al abrir fichero
+    if (F == NULL){
+        printf("Eror opening binary text file\n");
+        return -1;
+    }
+    // bucle para ir leyendo elementos
+    while(fread(&almacen[n_elementos], sizeof(struct tupla), 1, F) == 1){
+        // comprobar el tamanio de almacen
+        if (n_elementos == max_tuplas)
+        {
+            // duplicar tamanio de almacen
+            almacen = realloc(almacen, 2 * max_tuplas * sizeof(struct tupla));
+            max_tuplas = max_tuplas * 2;
+        }
+        n_elementos++;
+    }
+    fclose(F);
+    return 0;
+}
+// hay que ponerla cuando termine el servidor
+int write_back(){
+    char file[MAX];
+    getcwd(file, sizeof(file));
+    strcat(file, "/data_structure/almacen.txt");
+    // abrir descriptor de archivo
+    FILE *F = fopen(file, "wb");
+    // comprobar error al abrir archivo
+    if (F == NULL){
+        printf("Eror opening binary text file\n");
+        return -1;
+    }
+    // bucle para escribir en archivo
+    for (int i=0; i<n_elementos; i++){
+        fwrite(&almacen[i], sizeof(struct tupla), 1, F);
+    }
+    return 0;
 }

@@ -13,5 +13,7 @@ int s_set_value(int key, char *valor1, int* valor2_N_p, double *valor2_value);
 int s_modify_value(int key, char *valor1, int valor2_N, double *valor2_value);
 int s_delete_key(int key);
 int s_exist(int key);
+int load();
+int write_back();
 
 #endif //EJERCICIO1_DISTRIBUIDOS_SERVIDOR_H
