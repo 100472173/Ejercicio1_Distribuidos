@@ -24,6 +24,49 @@ unsigned int prio_r = 0;
 */
 
 int init(){
+    struct peticion p;
+    struct respuesta r;
+    mqd_t queue_servidor;
+    mqd_t queue_cliente;
+    char client_name[MAX];
+    // Diria que no hace falta hacer queue attr, es medio lioso ahora mismo, no entiendo muy bien
+
+    queue_servidor = mq_open("/SERVIDOR", O_CREAT|O_WRONLY, 0700, NULL) ;
+    if (queue_servidor == -1) {
+        fprintf(stderr, "Error al abrir la cola del servidor en el cliente.\n");
+        return -1;
+    }
+
+    sprintf(client_name, "%s%d", "/CLIENTE_", getpid()) ;
+    queue_cliente = mq_open(client_name, O_CREAT|O_RDONLY) ;
+    if (queue_cliente == -1) {
+        fprintf(stderr, "Error al abrir la cola del cliente en el cliente.\n");
+        mq_close(queue_servidor);
+        return -1;
+    }
+
+    // Rellenar la peticion
+    memset(&p, 0, sizeof(struct peticion));
+    p.op = 0;
+    strcpy(p.q_name, client_name);
+
+    if (mq_send(queue_servidor, (const char *)&p, sizeof(struct peticion), 0) < 0){
+        fprintf(stderr, "Error al enviar el mensaje al servidor.\n");
+        perror("mq_send");
+        return -1;
+    }
+    if (mq_receive(queue_cliente, (char *)&r, sizeof(struct respuesta), 0) < 0){
+        fprintf(stderr, "Error al recibir el mensaje del servidor.\n");
+        perror("mq_recv");
+        return -1;
+    }
+
+    mq_close(queue_servidor);
+    mq_close(queue_cliente);
+    mq_unlink(client_name);
+    // No sé si hay que hacer cast de r a struct respuesta
+    return r.status;
+    /*
     // abirir cola servidor
     int open_s = open_server();
     // crear peticion
@@ -38,6 +81,7 @@ int init(){
     int rec = receive_client((char*)&res, size_resp, &prio_r);
     int exit_value = check_errors(open_c, open_s, send, rec);
     return exit_value;
+     */
 }
 
 int set_value(int key, char *value1, int N_value2, double *V_value2){
@@ -50,23 +94,43 @@ int set_value(int key, char *value1, int N_value2, double *V_value2){
 
     queue_servidor = mq_open("/SERVIDOR", O_CREAT|O_WRONLY, 0700, NULL) ;
     if (queue_servidor == -1) {
+        fprintf(stderr, "Error al abrir la cola del servidor en el cliente.\n");
         return -1;
     }
 
     sprintf(client_name, "%s%d", "/CLIENTE_", getpid()) ;
     queue_cliente = mq_open(client_name, O_CREAT|O_RDONLY) ;
     if (queue_cliente == -1) {
+        fprintf(stderr, "Error al abrir la cola del cliente en el cliente.\n");
         mq_close(queue_servidor);
         return -1;
     }
 
     // Rellenar la peticion
+    memset(&p, 0, sizeof(struct peticion));
     p.op = 1;
     strcpy(p.q_name, client_name);
     p.key = key;
-    strcpy(p.valor1, value1);
+    p.valor1 = value1;
+    p.valor2_value = V_value2;
     p.valor2_N = N_value2;
-    p.valor2_N_p = NULL;
+
+    if (mq_send(queue_servidor, (const char *)&p, sizeof(struct peticion), 0) < 0){
+        fprintf(stderr, "Error al enviar el mensaje al servidor.\n");
+        perror("mq_send");
+        return -1;
+    }
+    if (mq_receive(queue_cliente, (char *)&r, sizeof(struct respuesta), 0) < 0){
+        fprintf(stderr, "Error al recibir el mensaje del servidor.\n");
+        perror("mq_recv");
+        return -1;
+    }
+
+    mq_close(queue_servidor);
+    mq_close(queue_cliente);
+    mq_unlink(client_name);
+    // No sé si hay que hacer cast de r a struct respuesta
+    return r.status;
 
     /*
     // abirir cola servidor
@@ -91,6 +155,54 @@ int set_value(int key, char *value1, int N_value2, double *V_value2){
 }
 
 int get_value(int key, char *value1, int *N_value2, double *V_value2){
+    struct peticion p;
+    struct respuesta r;
+    mqd_t queue_servidor;
+    mqd_t queue_cliente;
+    char client_name[MAX];
+    // Diria que no hace falta hacer queue attr, es medio lioso ahora mismo, no entiendo muy bien
+
+    queue_servidor = mq_open("/SERVIDOR", O_CREAT|O_WRONLY, 0700, NULL) ;
+    if (queue_servidor == -1) {
+        fprintf(stderr, "Error al abrir la cola del servidor en el cliente.\n");
+        return -1;
+    }
+
+    sprintf(client_name, "%s%d", "/CLIENTE_", getpid()) ;
+    queue_cliente = mq_open(client_name, O_CREAT|O_RDONLY) ;
+    if (queue_cliente == -1) {
+        fprintf(stderr, "Error al abrir la cola del cliente en el cliente.\n");
+        mq_close(queue_servidor);
+        return -1;
+    }
+
+    // Rellenar la peticion
+    memset(&p, 0, sizeof(struct peticion));
+    p.op = 2;
+    strcpy(p.q_name, client_name);
+    p.key = key;
+    p.valor1 = value1;
+    p.valor2_value = V_value2;
+    p.valor2_N_p = N_value2;
+
+    if (mq_send(queue_servidor, (const char *)&p, sizeof(struct peticion), 0) < 0){
+        fprintf(stderr, "Error al enviar el mensaje al servidor.\n");
+        perror("mq_send");
+        return -1;
+    }
+    if (mq_receive(queue_cliente, (char *)&r, sizeof(struct respuesta), 0) < 0){
+        fprintf(stderr, "Error al recibir el mensaje del servidor.\n");
+        perror("mq_recv");
+        return -1;
+    }
+
+    mq_close(queue_servidor);
+    mq_close(queue_cliente);
+    mq_unlink(client_name);
+    // No sé si hay que hacer cast de r a struct respuesta
+    return r.status;
+
+    /*
     // abirir cola servidor
     int open_s = open_server();
     // crear peticion
@@ -109,9 +221,57 @@ int get_value(int key, char *value1, int *N_value2, double *V_value2){
     int rec = receive_client((char *)&res, size_resp, &prio_r);
     int exit_value = check_errors(open_c, open_s, send, rec);
     return exit_value;
+    */
 }
 
 int modify_value(int key, char *value1, int N_value2, double *V_value2){
+    struct peticion p;
+    struct respuesta r;
+    mqd_t queue_servidor;
+    mqd_t queue_cliente;
+    char client_name[MAX];
+    // Diria que no hace falta hacer queue attr, es medio lioso ahora mismo, no entiendo muy bien
+
+    queue_servidor = mq_open("/SERVIDOR", O_CREAT|O_WRONLY, 0700, NULL) ;
+    if (queue_servidor == -1) {
+        fprintf(stderr, "Error al abrir la cola del servidor en el cliente.\n");
+        return -1;
+    }
+
+    sprintf(client_name, "%s%d", "/CLIENTE_", getpid()) ;
+    queue_cliente = mq_open(client_name, O_CREAT|O_RDONLY) ;
+    if (queue_cliente == -1) {
+        fprintf(stderr, "Error al abrir la cola del cliente en el cliente.\n");
+        mq_close(queue_servidor);
+        return -1;
+    }
+
+    // Rellenar la peticion
+    memset(&p, 0, sizeof(struct peticion));
+    p.op = 3;
+    strcpy(p.q_name, client_name);
+    p.key = key;
+    p.valor1 = value1;
+    p.valor2_value = V_value2;
+    p.valor2_N = N_value2;
+
+    if (mq_send(queue_servidor, (const char *)&p, sizeof(struct peticion), 0) < 0){
+        fprintf(stderr, "Error al enviar el mensaje al servidor.\n");
+        perror("mq_send");
+        return -1;
+    }
+    if (mq_receive(queue_cliente, (char *)&r, sizeof(struct respuesta), 0) < 0){
+        fprintf(stderr, "Error al recibir el mensaje del servidor.\n");
+        perror("mq_recv");
+        return -1;
+    }
+
+    mq_close(queue_servidor);
+    mq_close(queue_cliente);
+    mq_unlink(client_name);
+    // No sé si hay que hacer cast de r a struct respuesta
+    return r.status;
+    /*
     // abirir cola servidor
     int open_s = open_server();
     // crear peticion
@@ -130,8 +290,53 @@ int modify_value(int key, char *value1, int N_value2, double *V_value2){
     int rec = receive_client((char *)&res, size_resp, &prio_r);
     int exit_value = check_errors(open_c, open_s, send, rec);
     return exit_value;
+     */
 }
 int delete_key(int key){
+    struct peticion p;
+    struct respuesta r;
+    mqd_t queue_servidor;
+    mqd_t queue_cliente;
+    char client_name[MAX];
+    // Diria que no hace falta hacer queue attr, es medio lioso ahora mismo, no entiendo muy bien
+
+    queue_servidor = mq_open("/SERVIDOR", O_CREAT|O_WRONLY, 0700, NULL) ;
+    if (queue_servidor == -1) {
+        fprintf(stderr, "Error al abrir la cola del servidor en el cliente.\n");
+        return -1;
+    }
+
+    sprintf(client_name, "%s%d", "/CLIENTE_", getpid()) ;
+    queue_cliente = mq_open(client_name, O_CREAT|O_RDONLY) ;
+    if (queue_cliente == -1) {
+        fprintf(stderr, "Error al abrir la cola del cliente en el cliente.\n");
+        mq_close(queue_servidor);
+        return -1;
+    }
+
+    // Rellenar la peticion
+    memset(&p, 0, sizeof(struct peticion));
+    p.op = 4;
+    strcpy(p.q_name, client_name);
+    p.key = key;
+
+    if (mq_send(queue_servidor, (const char *)&p, sizeof(struct peticion), 0) < 0){
+        fprintf(stderr, "Error al enviar el mensaje al servidor.\n");
+        perror("mq_send");
+        return -1;
+    }
+    if (mq_receive(queue_cliente, (char *)&r, sizeof(struct respuesta), 0) < 0){
+        fprintf(stderr, "Error al recibir el mensaje del servidor.\n");
+        perror("mq_recv");
+        return -1;
+    }
+
+    mq_close(queue_servidor);
+    mq_close(queue_cliente);
+    mq_unlink(client_name);
+    // No sé si hay que hacer cast de r a struct respuesta
+    return r.status;
+    /*
     // abirir cola servidor
     int open_s = open_server();
     // crear peticion
@@ -147,9 +352,54 @@ int delete_key(int key){
     int rec = receive_client((char *)&res, size_resp, &prio_r);
     int exit_value = check_errors(open_c, open_s, send, rec);
     return exit_value;
+     */
 }
 
 int exist(int key){
+    struct peticion p;
+    struct respuesta r;
+    mqd_t queue_servidor;
+    mqd_t queue_cliente;
+    char client_name[MAX];
+    // Diria que no hace falta hacer queue attr, es medio lioso ahora mismo, no entiendo muy bien
+
+    queue_servidor = mq_open("/SERVIDOR", O_CREAT|O_WRONLY, 0700, NULL) ;
+    if (queue_servidor == -1) {
+        fprintf(stderr, "Error al abrir la cola del servidor en el cliente.\n");
+        return -1;
+    }
+
+    sprintf(client_name, "%s%d", "/CLIENTE_", getpid()) ;
+    queue_cliente = mq_open(client_name, O_CREAT|O_RDONLY) ;
+    if (queue_cliente == -1) {
+        fprintf(stderr, "Error al abrir la cola del cliente en el cliente.\n");
+        mq_close(queue_servidor);
+        return -1;
+    }
+
+    // Rellenar la peticion
+    memset(&p, 0, sizeof(struct peticion));
+    p.op = 4;
+    strcpy(p.q_name, client_name);
+    p.key = key;
+
+    if (mq_send(queue_servidor, (const char *)&p, sizeof(struct peticion), 0) < 0){
+        fprintf(stderr, "Error al enviar el mensaje al servidor.\n");
+        perror("mq_send");
+        return -1;
+    }
+    if (mq_receive(queue_cliente, (char *)&r, sizeof(struct respuesta), 0) < 0){
+        fprintf(stderr, "Error al recibir el mensaje del servidor.\n");
+        perror("mq_recv");
+        return -1;
+    }
+
+    mq_close(queue_servidor);
+    mq_close(queue_cliente);
+    mq_unlink(client_name);
+    // No sé si hay que hacer cast de r a struct respuesta
+    return r.status;
+    /*
     // abirir cola servidor
     int open_s = open_server();
     // crear peticion
@@ -165,6 +415,7 @@ int exist(int key){
     int rec = receive_client((char *)&res, size_resp, &prio_r);
     int exit_value = check_errors(open_c, open_s, send, rec);
     return exit_value;
+     */
 }
 
 int open_client(){
@@ -179,9 +430,6 @@ int open_client(){
     }
     return queue_cliente;
 }
-
-
-
 
 // TODO: tal vez haya que cambiar el tema de los exits. habra que pensarlo
 int open_server(){
