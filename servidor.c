@@ -40,7 +40,7 @@ int main ( int argc, char *argv[] )
     almacen = (struct tupla*)malloc(max_tuplas*sizeof(struct tupla));
     // cargamos los datos del almacen
     if (-1 == load()){
-        fprintf(stderr, "Error al cargar el almacen del archivo binary");
+        fprintf(stderr, "Error al cargar el almacen del archivo binary\n");
         return -1;
     }
     // Inicializamos peticion y variables
@@ -289,10 +289,10 @@ int load(){
     // path del archivo
     char file[MAX];
     strcpy(file, cwd);
-    strcat(file, "almacen.txt");
+    strcat(file, "/almacen.txt");
 
     // abrir descriptor de fichero
-    FILE *F = fopen(file, "rb");
+    FILE *F = fopen(file, "wb+");
     // comprobar error al abrir fichero
     if (F == NULL){
         printf("Eror opening binary text file\n");
