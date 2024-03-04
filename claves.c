@@ -32,6 +32,7 @@ int init(){
     int recv_r = receive_client(&queue_cliente, (char *)&r, sizeof(struct respuesta), 0);
     // comprobar errores
     if (-1 == check_errors(open_c, open_s, send_p, recv_r)){
+        printf("Communications error\n");
         return -1;
     }
 
@@ -59,9 +60,9 @@ int set_value(int key, char *value1, int N_value2, double *V_value2){
     p.op = 1;
     strcpy(p.q_name, client_name);
     p.key = key;
-    p.valor1 = value1;
+    strcpy(p.valor1, value1);
+    p.valor2_N =N_value2;
     p.valor2_value = V_value2;
-    p.valor2_N = N_value2;
 
     // mandar peticion al servidor
     int send_p = send_server(&queue_servidor, (const char *)&p, sizeof(struct peticion), 0);
@@ -69,6 +70,7 @@ int set_value(int key, char *value1, int N_value2, double *V_value2){
     int recv_r = receive_client(&queue_cliente, (char *)&r, sizeof(struct respuesta), 0);
     // comprobar errores
     if (-1 == check_errors(open_c, open_s, send_p, recv_r)){
+        printf("Communications error\n");
         return -1;
     }
     mq_close(queue_servidor);
@@ -96,7 +98,7 @@ int get_value(int key, char *value1, int *N_value2, double *V_value2){
     p.op = 2;
     strcpy(p.q_name, client_name);
     p.key = key;
-    p.valor1 = value1;
+    strcpy(p.valor1, value1);
     p.valor2_value = V_value2;
     p.valor2_N_p = N_value2;
 
@@ -106,6 +108,7 @@ int get_value(int key, char *value1, int *N_value2, double *V_value2){
     int recv_r = receive_client(&queue_cliente, (char *)&r, sizeof(struct respuesta), 0);
     // comprobar errores
     if (-1 == check_errors(open_c, open_s, send_p, recv_r)){
+        printf("Communications error\n");
         return -1;
     }
 
@@ -133,7 +136,7 @@ int modify_value(int key, char *value1, int N_value2, double *V_value2){
     p.op = 3;
     strcpy(p.q_name, client_name);
     p.key = key;
-    p.valor1 = value1;
+    strcpy(p.valor1, value1);
     p.valor2_value = V_value2;
     p.valor2_N = N_value2;
 
@@ -143,6 +146,7 @@ int modify_value(int key, char *value1, int N_value2, double *V_value2){
     int recv_r = receive_client(&queue_cliente, (char *)&r, sizeof(struct respuesta), 0);
     // comprobar errores
     if (-1 == check_errors(open_c, open_s, send_p, recv_r)){
+        printf("Communications error\n");
         return -1;
     }
 
@@ -175,6 +179,7 @@ int delete_key(int key){
     int recv_r = receive_client(&queue_cliente, (char *)&r, sizeof(struct respuesta), 0);
     // comprobar errores
     if (-1 == check_errors(open_c, open_s, send_p, recv_r)){
+        printf("Communications error\n");
         return -1;
     }
 
@@ -198,7 +203,7 @@ int exist(int key){
     // Rellenar la peticion
     sprintf(client_name, "%s%d", "/CLIENTE_", getpid());
     memset(&p, 0, sizeof(struct peticion));
-    p.op = 4;
+    p.op = 5;
     strcpy(p.q_name, client_name);
     p.key = key;
     // mandar peticion al servidor
@@ -207,6 +212,7 @@ int exist(int key){
     int recv_r = receive_client(&queue_cliente, (char *)&r, sizeof(struct respuesta), 0);
     // comprobar errores
     if (-1 == check_errors(open_c, open_s, send_p, recv_r)){
+        printf("Communications error\n");
         return -1;
     }
 

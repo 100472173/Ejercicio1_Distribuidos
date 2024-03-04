@@ -33,9 +33,8 @@ int max_tuplas = 50;
 
 
 
-
-int main ( int argc, char *argv[] )
-{
+// TODO: mover todas las funciones s_ y load y write_back a un .c nuevo o a structures.c
+int main ( int argc, char *argv[]){
     // Inicializamos el almacén
     almacen = (struct tupla*)malloc(max_tuplas*sizeof(struct tupla));
     // cargamos los datos del almacen
@@ -109,23 +108,27 @@ void tratar_peticion (struct peticion* p){
     pthread_cond_signal(&sync_cond);
     pthread_mutex_unlock(&sync_mutex);
     // En funcion de la operacion especificada en la operacion hacemos una u otra operacion
-    switch (p_local.op)
-    {
-        case 0: resp.status = s_init();
-            break;
-        case 1: resp.status = s_get_value(p_local.key, p_local.valor1, p_local.valor2_N, p_local.valor2_value);
-            break;
-        case 2: resp.status = s_set_value(p_local.key, p_local.valor1, p_local.valor2_N_p, p_local.valor2_value);
-            break;
-        case 3: resp.status = s_modify_value(p_local.key, p_local.valor1, p_local.valor2_N, p_local.valor2_value);
-            break;
-        case 4: resp.status = s_delete_key(p_local.key);
-            break;
-        case 5: resp.status = s_exist(p_local.key);
-            break;
+    switch (p_local.op){
+    case 0:
+        resp.status = s_init();
+        break;
+    case 1:
+        resp.status = s_set_value(p_local.key, p_local.valor1, p_local.valor2_N, p_local.valor2_value);
+        break;
+    case 2:
+        resp.status = s_get_value(p_local.key, p_local.valor1, p_local.valor2_N_p, p_local.valor2_value);
+        break;
+    case 3:
+        resp.status = s_modify_value(p_local.key, p_local.valor1, p_local.valor2_N, p_local.valor2_value);
+        break;
+    case 4:
+        resp.status = s_delete_key(p_local.key);
+        break;
+    case 5:
+        resp.status = s_exist(p_local.key);
+        break;
     }
     // Abrimos la cola del cliente
-    //TODO: falta darle los atributos
     mqd_t queue_cliente = mq_open(p_local.q_name, O_CREAT | O_WRONLY, 0700, &attr_cliente);
     if (queue_cliente == -1) {
         fprintf(stderr, "Error al abrir la cola de mensajes del cliente.\n");
@@ -155,9 +158,10 @@ int s_init() {
     getcwd(file, sizeof(file));
     strcat(file, "/data_structure/almacen.txt");
     // abrir fichero y sobrescribir sus contenidos
-    FILE * f = fopen(file, "wb");
+    FILE * f = fopen(file, "w+");
     // error al abrir el fichero
     if (NULL == f){
+        perror("open_file");
         return -1;
     }
     fclose(f);
@@ -165,7 +169,7 @@ int s_init() {
 
 }
 
-int s_get_value(int key, char *valor1, int valor2_N, double *valor2_value) {
+int s_get_value(int key, char *valor1, int * valor2_N, double *valor2_value) {
     // iterar por el almacen
     int existe = -1;
     for (int i = 0; i < n_elementos; i++){
@@ -173,18 +177,18 @@ int s_get_value(int key, char *valor1, int valor2_N, double *valor2_value) {
             existe = 0;
             // copiar informacion
             strcpy(valor1, almacen[i].valor1);
-            valor2_N = almacen[i].valor2_N;
-            memcpy(valor2_value, almacen[i].valor2_value, valor2_N*sizeof(double));
+            *valor2_N = almacen[i].valor2_N;
+            memcpy(valor2_value, almacen[i].valor2_value, *valor2_N*sizeof(double));
         }
     }
     // devolver valor
     return existe;
 }
 
-int s_set_value(int key, char *valor1, int* valor2_N_p, double *valor2_value) {
+int s_set_value(int key, char *valor1, int valor2_N_p, double *valor2_value) {
     // comprobar errores
     // rango valor2n
-    if (*valor2_N_p < 1 || *valor2_N_p > 32){
+    if (valor2_N_p < 1 || valor2_N_p > 32){
         fprintf(stderr, "Error: N_value2 no esta en el rango [1,32].\n");
         return -1;
     }
@@ -196,22 +200,22 @@ int s_set_value(int key, char *valor1, int* valor2_N_p, double *valor2_value) {
             return -1;
         }
     }
-
-    // crear tupla de insercion
-    struct tupla insertar;
-    insertar.clave = key;
-    strcpy(insertar.valor1, valor1);
-    memcpy(insertar.valor2_value, valor2_value, *valor2_N_p*sizeof(double));
     // comprobar el tamanio de almacen
     if (n_elementos == max_tuplas){
         // duplicar tamanio de almacen
         almacen = realloc(almacen, 2 * max_tuplas * sizeof(struct tupla));
         max_tuplas = max_tuplas * 2;
     }
+
+    // crear tupla de insercion
+    struct tupla insertar;
+    insertar.clave = key;
+    strcpy(insertar.valor1, valor1);
+    memcpy(insertar.valor2_value, valor2_value, valor2_N_p*sizeof(double));
     // agregar a almacen
     almacen[n_elementos] = insertar;
     n_elementos++;
-
+    write_back();
     // devolver valor
     return 0;
 }
@@ -292,10 +296,10 @@ int load(){
     strcat(file, "/almacen.txt");
 
     // abrir descriptor de fichero
-    FILE *f = fopen(file, "wb+");
+    FILE *f = fopen(file, "w+");
     // comprobar error al abrir fichero
     if (f == NULL){
-        printf("Eror opening binary text file\n");
+        perror("open_file");
         return -1;
     }
     // bucle para ir leyendo elementos
@@ -318,10 +322,10 @@ int write_back(){
     getcwd(file, sizeof(file));
     strcat(file, "/data_structure/almacen.txt");
     // abrir descriptor de archivo
-    FILE *f = fopen(file, "wb");
+    FILE *f = fopen(file, "w+");
     // comprobar error al abrir archivo
     if (f == NULL){
-        printf("Eror opening binary text file\n");
+        perror("open_file");
         return -1;
     }
     // bucle para escribir en archivo

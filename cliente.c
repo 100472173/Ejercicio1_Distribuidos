@@ -2,25 +2,25 @@
 // Created by linux-lex on 29/02/24.
 //
 #include "claves.h"
-#include <mqueue.h>
 #include <stdio.h>
-#include <unistd.h>
-
+#include <stdlib.h>
 
 int main(){
-    init();
-    return 0;
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    // prueba de set value
+    int key = 1;
+    char value1[20] = "Messi";
+    int N_value2 = 5;
+    double *V_value2 = (double *)malloc(N_value2 * sizeof(double));
+    // llenar vector
+    for (int i = 0; i < N_value2; i++){
+        V_value2[i] = i;
+    }
+    int set_value_id = set_value(key, value1, N_value2, V_value2);
+    printf("Set value result: %d\n", set_value_id);
+
+    // int exists_id = exist(1);
+    // printf("Exists result: %d\n", exists_id);
+
     /* // abir cola de mensajes para escribir
     mqd_t queue_write;
     struct mq_attr attr_write;

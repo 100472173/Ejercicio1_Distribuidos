@@ -98,6 +98,7 @@ int delete_key(int key);
  */
 int exist(int key);
 
+// funciones necesarias para clientes
 int open_server(mqd_t * queue_servidor);
 
 int open_client(mqd_t *queue_cliente);

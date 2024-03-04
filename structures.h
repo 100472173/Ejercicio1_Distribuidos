@@ -11,7 +11,7 @@
 struct peticion {
     int op;
     int key;
-    char* valor1;
+    char valor1[MAX];
     int valor2_N;
     int* valor2_N_p;
     double* valor2_value;
