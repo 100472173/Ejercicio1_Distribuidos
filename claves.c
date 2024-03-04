@@ -30,7 +30,9 @@ int init(){
     mqd_t queue_cliente;
     char client_name[MAX];
     // Diria que no hace falta hacer queue attr, es medio lioso ahora mismo, no entiendo muy bien
-
+    struct mq_attr attr_cliente;
+    attr_cliente.mq_maxmsg = 10;
+    attr_cliente.mq_msgsize = sizeof(struct respuesta);
     queue_servidor = mq_open("/SERVIDOR", O_CREAT|O_WRONLY, 0700, NULL) ;
     if (queue_servidor == -1) {
         fprintf(stderr, "Error al abrir la cola del servidor en el cliente.\n");
@@ -38,7 +40,7 @@ int init(){
     }
 
     sprintf(client_name, "%s%d", "/CLIENTE_", getpid()) ;
-    queue_cliente = mq_open(client_name, O_CREAT|O_RDONLY) ;
+    queue_cliente = mq_open(client_name, O_CREAT|O_RDONLY, 0700, &attr_cliente) ;
     if (queue_cliente == -1) {
         fprintf(stderr, "Error al abrir la cola del cliente en el cliente.\n");
         mq_close(queue_servidor);
@@ -417,7 +419,7 @@ int exist(int key){
     return exit_value;
      */
 }
-
+/*
 int open_client(){
     // crear nombre de la cola
     sprintf(queue_name_c, "%s%d", "/CLIENTE_", getpid());
@@ -469,3 +471,4 @@ int check_errors(int open_c, int open_s, int send, int rec){
     }
     return 0;
 }
+ */
