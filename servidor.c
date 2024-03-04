@@ -69,11 +69,11 @@ int main ( int argc, char *argv[] )
         // para la recepcion tal vez haya que hacer unmarshaling la conversion que esta
         // aqui no se si sirva, hay que hacer pruebas.
         if (mq_receive(queue_servidor, (char *)&p, sizeof(struct peticion), &prio) < 0) {
-            fprintf(stderr, "Error al recibir la petición de la cola de mensajes.\n");
+            perror("mq_recv");
             return -1;
         }
         if (pthread_create(&thid[contador], &attr, (void*)tratar_peticion, (struct perticion *) &p) != 0) {
-            fprintf(stderr, "Error al crear el hilo.\n");
+            perror("mq_send");
             return -1;
         }
         // Hacemos lock al mutex hasta que se copie la peticion en el hilo
@@ -155,12 +155,12 @@ int s_init() {
     getcwd(file, sizeof(file));
     strcat(file, "/data_structure/almacen.txt");
     // abrir fichero y sobrescribir sus contenidos
-    FILE * F = fopen(file, "wb");
+    FILE * f = fopen(file, "wb");
     // error al abrir el fichero
-    if (NULL == F){
+    if (NULL == f){
         return -1;
     }
-    fclose(F);
+    fclose(f);
     return 0;
 
 }
@@ -292,14 +292,14 @@ int load(){
     strcat(file, "/almacen.txt");
 
     // abrir descriptor de fichero
-    FILE *F = fopen(file, "wb+");
+    FILE *f = fopen(file, "wb+");
     // comprobar error al abrir fichero
-    if (F == NULL){
+    if (f == NULL){
         printf("Eror opening binary text file\n");
         return -1;
     }
     // bucle para ir leyendo elementos
-    while(fread(&almacen[n_elementos], sizeof(struct tupla), 1, F) == 1){
+    while(fread(&almacen[n_elementos], sizeof(struct tupla), 1, f) == 1){
         // comprobar el tamanio de almacen
         if (n_elementos == max_tuplas)
         {
@@ -309,7 +309,7 @@ int load(){
         }
         n_elementos++;
     }
-    fclose(F);
+    fclose(f);
     return 0;
 }
 // hay que ponerla cuando termine el servidor
@@ -318,15 +318,16 @@ int write_back(){
     getcwd(file, sizeof(file));
     strcat(file, "/data_structure/almacen.txt");
     // abrir descriptor de archivo
-    FILE *F = fopen(file, "wb");
+    FILE *f = fopen(file, "wb");
     // comprobar error al abrir archivo
-    if (F == NULL){
+    if (f == NULL){
         printf("Eror opening binary text file\n");
         return -1;
     }
     // bucle para escribir en archivo
     for (int i=0; i<n_elementos; i++){
-        fwrite(&almacen[i], sizeof(struct tupla), 1, F);
+        fwrite(&almacen[i], sizeof(struct tupla), 1, f);
     }
+    fclose(f);
     return 0;
 }

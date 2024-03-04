@@ -2,6 +2,7 @@
 // Created by linux-lex on 29/02/24.
 //
 #include <stddef.h>
+#include <mqueue.h>
 #ifndef EJERCICIO1_DISTRIBUIDOS_CLAVES_H
 #define EJERCICIO1_DISTRIBUIDOS_CLAVES_H
 
@@ -97,13 +98,13 @@ int delete_key(int key);
  */
 int exist(int key);
 
-int open_server();
+int open_server(mqd_t * queue_servidor);
 
-int open_client();
+int open_client(mqd_t *queue_cliente);
 
-int send_server(char *message, size_t size, unsigned int prio);
+int send_server(mqd_t *queue_servidor, const char *message, int size, unsigned int prio);
 
-int receive_client(char *message, size_t size, unsigned int * prio);
+int receive_client(mqd_t *queue_cliente, char *message, int size, unsigned int *prio);
 
 int check_errors(int open_c, int open_s, int send, int rec);
 
