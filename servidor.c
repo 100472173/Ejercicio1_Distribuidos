@@ -113,6 +113,7 @@ void tratar_peticion (struct peticion* p){
         resp.status = s_init();
         break;
     case 1:
+        printf("Hola");
         resp.status = s_set_value(p_local.key, p_local.valor1, p_local.valor2_N, p_local.valor2_value);
         break;
     case 2:
@@ -200,6 +201,7 @@ int s_set_value(int key, char *valor1, int valor2_N_p, double *valor2_value) {
             return -1;
         }
     }
+    printf("He llegado hasta aqui\n");
     // comprobar el tamanio de almacen
     if (n_elementos == max_tuplas){
         // duplicar tamanio de almacen
@@ -208,12 +210,21 @@ int s_set_value(int key, char *valor1, int valor2_N_p, double *valor2_value) {
     }
 
     // crear tupla de insercion
+    printf("He llegado 2\n");
+
     struct tupla insertar;
+    printf("He llegado 3\n");
     insertar.clave = key;
     strcpy(insertar.valor1, valor1);
-    memcpy(insertar.valor2_value, valor2_value, valor2_N_p*sizeof(double));
+    printf("He llegado 4\n");
+    for (int i = 0; i < valor2_N_p; i++) {
+        insertar.valor2_value[i] = valor2_value[i];
+    }
+    // memcpy(insertar.valor2_value, valor2_value, valor2_N_p*sizeof(double));
+    printf("He llsssegado 5\n");
     // agregar a almacen
     almacen[n_elementos] = insertar;
+    printf("He llegado 6\n");
     n_elementos++;
     write_back();
     // devolver valor

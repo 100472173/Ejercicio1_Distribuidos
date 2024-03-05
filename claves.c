@@ -53,7 +53,7 @@ int set_value(int key, char *value1, int N_value2, double *V_value2){
     // abrir las colas
     int open_c = open_client(&queue_cliente);
     int open_s = open_server(&queue_servidor);
-
+    printf("aaa 1\n");
     // Rellenar la peticion
     sprintf(client_name, "%s%d", "/CLIENTE_", getpid());
     memset(&p, 0, sizeof(struct peticion));
@@ -61,10 +61,15 @@ int set_value(int key, char *value1, int N_value2, double *V_value2){
     strcpy(p.q_name, client_name);
     p.key = key;
     strcpy(p.valor1, value1);
+    p.valor2_N = N_value2;
     printf("AQUI 1\n");
-    memcpy(p.valor2_value, V_value2, N_value2* sizeof(double));
+    p.valor2_value = (double *) malloc(p.valor2_N * sizeof(double));
+    for (int i = 0; i < N_value2; i++) {
+        p.valor2_value[i] = V_value2[i];
+    }
+    //memcpy(p.valor2_value, V_value2, N_value2* sizeof(double));
     printf("AQUI 2\n");
-
+    printf("aaa 2\n");
     // mandar peticion al servidor
     int send_p = send_server(&queue_servidor, (const char *)&p, sizeof(struct peticion), 0);
     // recibir respuesta
@@ -74,6 +79,7 @@ int set_value(int key, char *value1, int N_value2, double *V_value2){
         printf("Communications error\n");
         return -1;
     }
+    free(p.valor2_value);
     mq_close(queue_servidor);
     mq_close(queue_cliente);
     mq_unlink(client_name);
