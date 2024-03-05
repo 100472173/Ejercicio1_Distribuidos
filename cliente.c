@@ -6,13 +6,26 @@
 #include <stdlib.h>
 
 int main(){
+    init();
     // prueba de set value
     int key = 1;
     char value1[20] = "Messi";
     int N_value2 = 5;
-    double V_value2[5] = {5.2, 4.1, 3.1, 2.4, 1.5};
+    double V_value2[5] = {5.5, 4.5, 3.5, 2.5, 1.5};
     int set_value_id = set_value(key, value1, N_value2, (double *) V_value2);
     printf("Set value result: %d\n", set_value_id);
+    int set_value_id_2 = set_value(key, value1, N_value2, (double *)V_value2);
+    printf("Set value result: %d\n", set_value_id_2);
+    char value2[20] = "CR7";
+    double V_value3[6] = {5.25, 4.5, 3.5, 2.5, 1.5, 5.5};
+    int modify = modify_value(key, value2, N_value2+1, V_value3);
+    printf("Modify value result: %d\n", modify);
+
+    char value[256];
+    double vector[32];
+    int n_value;
+    int get_value_id = get_value(1, value, &n_value, vector);
+    printf("Get value result: %d.\n %s, %d, %f\n", get_value_id, value, n_value, vector[5]);
 
     // int exists_id = exist(1);
     // printf("Exists result: %d\n", exists_id);

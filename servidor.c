@@ -31,17 +31,17 @@ int n_elementos = 0;
 // elmentos maximos del array
 int max_tuplas = 50;
 
-
-
+// TODO: hacer que termine el servidor con un temporizador
+// TODO: implementar correctamente el almacen
 // TODO: mover todas las funciones s_ y load y write_back a un .c nuevo o a structures.c
 int main ( int argc, char *argv[]){
     // Inicializamos el almacén
     almacen = (struct tupla*)malloc(max_tuplas*sizeof(struct tupla));
-    // cargamos los datos del almacen
+    /* // cargamos los datos del almacen
     if (-1 == load()){
         fprintf(stderr, "Error al cargar el almacen del archivo binary\n");
         return -1;
-    }
+    } */
     // Inicializamos peticion y variables
     struct peticion p;
     unsigned int prio = 0;
@@ -85,12 +85,10 @@ int main ( int argc, char *argv[]){
         // Contador para los hilos
         contador++;
     }
-    // liberar memoria almacen
     if (almacen != NULL){
         almacen = NULL;
         free(almacen);
     }
-    
     return 0;
 }
 
@@ -113,11 +111,10 @@ void tratar_peticion (struct peticion* p){
         resp.status = s_init();
         break;
     case 1:
-        printf("Hola");
         resp.status = s_set_value(p_local.key, p_local.valor1, p_local.valor2_N, p_local.valor2_value);
         break;
     case 2:
-        resp.status = s_get_value(p_local.key, p_local.valor1, p_local.valor2_N_p, p_local.valor2_value);
+        resp.status = s_get_value(p_local.key, resp.valor1, &resp.N_value2, resp.valor2_value);
         break;
     case 3:
         resp.status = s_modify_value(p_local.key, p_local.valor1, p_local.valor2_N, p_local.valor2_value);
@@ -151,45 +148,34 @@ void tratar_peticion (struct peticion* p){
 
 
 int s_init() {
+    
+    // TODO: quitar esto cuando este el temporizador bien.
+    almacen = NULL;
+    free(almacen);
+    almacen = (struct tupla *)malloc(max_tuplas * sizeof(struct tupla));
     // poner a 0 todos los elementos del almacen
     size_t elementos = max_tuplas * sizeof(struct tupla);
     memset(almacen, 0, elementos);
     // borar todas las tuplas del almacen
-    char file[MAX];
+    /* char file[MAX];
     getcwd(file, sizeof(file));
     strcat(file, "/data_structure/almacen.txt");
     // abrir fichero y sobrescribir sus contenidos
-    FILE * f = fopen(file, "w+");
+    FILE * f = fopen(file, "w");
     // error al abrir el fichero
     if (NULL == f){
         perror("open_file");
         return -1;
     }
-    fclose(f);
+    fclose(f); */
     return 0;
 
 }
 
-int s_get_value(int key, char *valor1, int * valor2_N, double *valor2_value) {
-    // iterar por el almacen
-    int existe = -1;
-    for (int i = 0; i < n_elementos; i++){
-        if (almacen[i].clave == key){
-            existe = 0;
-            // copiar informacion
-            strcpy(valor1, almacen[i].valor1);
-            *valor2_N = almacen[i].valor2_N;
-            memcpy(valor2_value, almacen[i].valor2_value, *valor2_N*sizeof(double));
-        }
-    }
-    // devolver valor
-    return existe;
-}
-
-int s_set_value(int key, char *valor1, int valor2_N_p, double *valor2_value) {
+int s_set_value(int key, char *valor1, int valor2_N, double *valor2_value) {
     // comprobar errores
     // rango valor2n
-    if (valor2_N_p < 1 || valor2_N_p > 32){
+    if (valor2_N < 1 || valor2_N > 32){
         fprintf(stderr, "Error: N_value2 no esta en el rango [1,32].\n");
         return -1;
     }
@@ -201,7 +187,6 @@ int s_set_value(int key, char *valor1, int valor2_N_p, double *valor2_value) {
             return -1;
         }
     }
-    printf("He llegado hasta aqui\n");
     // comprobar el tamanio de almacen
     if (n_elementos == max_tuplas){
         // duplicar tamanio de almacen
@@ -210,25 +195,39 @@ int s_set_value(int key, char *valor1, int valor2_N_p, double *valor2_value) {
     }
 
     // crear tupla de insercion
-    printf("He llegado 2\n");
-
     struct tupla insertar;
-    printf("He llegado 3\n");
     insertar.clave = key;
+    insertar.valor2_N = valor2_N;
     strcpy(insertar.valor1, valor1);
-    printf("He llegado 4\n");
-    for (int i = 0; i < valor2_N_p; i++) {
+    // copiar vector
+    for (int i = 0; i < valor2_N; i++) {
         insertar.valor2_value[i] = valor2_value[i];
     }
-    // memcpy(insertar.valor2_value, valor2_value, valor2_N_p*sizeof(double));
-    printf("He llsssegado 5\n");
     // agregar a almacen
     almacen[n_elementos] = insertar;
-    printf("He llegado 6\n");
     n_elementos++;
-    write_back();
     // devolver valor
+    // escritura en archivo
+    /* write_back(); */
     return 0;
+}
+
+int s_get_value(int key, char *valor1, int *valor2_N, double *valor2_value){
+    // iterar por el almacen
+    int existe = -1;
+    for (int i = 0; i < n_elementos; i++){
+        if (almacen[i].clave == key){
+            existe = 0;
+            // copiar informacion
+            strcpy(valor1, almacen[i].valor1);
+                *valor2_N = almacen[i].valor2_N;
+            for (int j = 0; j<almacen[i].valor2_N; j++){
+                valor2_value[j] = almacen[i].valor2_value[j];
+            }
+        }
+    }
+    // devolver valor
+    return existe;
 }
 
 int s_modify_value(int key, char *valor1, int valor2_N, double *valor2_value) {
@@ -244,10 +243,13 @@ int s_modify_value(int key, char *valor1, int valor2_N, double *valor2_value) {
             existe = 0;
             // modificar valores
             strcpy(almacen[i].valor1, valor1);
-            // igualar todo el vector a 0
+            almacen[i].valor2_N = valor2_N;
+            // // igualar todo el vector a 0
             memset(almacen[i].valor2_value, 0, 32*sizeof(double));
             // copiar parametro a vector
-            memcpy(almacen[i].valor2_value, valor2_value, valor2_N*sizeof(double));
+            for (int j = 0; j<valor2_N; j++){
+                almacen[i].valor2_value[j] = valor2_value[j];
+            }
         }
     }
     return existe;
@@ -260,7 +262,6 @@ int s_delete_key(int key) {
         if (almacen[i].clave == key){
             existe = 0;
             // esto funciona si el orden de las tuplas no importa. Sino hay que cambiarlo
-
             // copiar ultimo elemento del almacen al indice
             almacen[i] = almacen[n_elementos-1];
             // borrar ultimo elemento del almacen
@@ -286,7 +287,7 @@ int s_exist(int key) {
 
     // falta la parte del error
 }
-int load(){
+/* int load(){
     // obtener directorio
     char cwd[MAX];
     getcwd(cwd, sizeof(cwd));
@@ -307,7 +308,8 @@ int load(){
     strcat(file, "/almacen.txt");
 
     // abrir descriptor de fichero
-    FILE *f = fopen(file, "w+");
+    FILE *f = fopen(file, "a");
+    rewind(f);
     // comprobar error al abrir fichero
     if (f == NULL){
         perror("open_file");
@@ -333,7 +335,7 @@ int write_back(){
     getcwd(file, sizeof(file));
     strcat(file, "/data_structure/almacen.txt");
     // abrir descriptor de archivo
-    FILE *f = fopen(file, "w+");
+    FILE *f = fopen(file, "w");
     // comprobar error al abrir archivo
     if (f == NULL){
         perror("open_file");
@@ -345,4 +347,4 @@ int write_back(){
     }
     fclose(f);
     return 0;
-}
+} */

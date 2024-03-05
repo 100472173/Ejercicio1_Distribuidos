@@ -53,7 +53,6 @@ int set_value(int key, char *value1, int N_value2, double *V_value2){
     // abrir las colas
     int open_c = open_client(&queue_cliente);
     int open_s = open_server(&queue_servidor);
-    printf("aaa 1\n");
     // Rellenar la peticion
     sprintf(client_name, "%s%d", "/CLIENTE_", getpid());
     memset(&p, 0, sizeof(struct peticion));
@@ -62,14 +61,10 @@ int set_value(int key, char *value1, int N_value2, double *V_value2){
     p.key = key;
     strcpy(p.valor1, value1);
     p.valor2_N = N_value2;
-    printf("AQUI 1\n");
-    p.valor2_value = (double *) malloc(p.valor2_N * sizeof(double));
+    // copiar vector
     for (int i = 0; i < N_value2; i++) {
         p.valor2_value[i] = V_value2[i];
     }
-    //memcpy(p.valor2_value, V_value2, N_value2* sizeof(double));
-    printf("AQUI 2\n");
-    printf("aaa 2\n");
     // mandar peticion al servidor
     int send_p = send_server(&queue_servidor, (const char *)&p, sizeof(struct peticion), 0);
     // recibir respuesta
@@ -79,7 +74,6 @@ int set_value(int key, char *value1, int N_value2, double *V_value2){
         printf("Communications error\n");
         return -1;
     }
-    free(p.valor2_value);
     mq_close(queue_servidor);
     mq_close(queue_cliente);
     mq_unlink(client_name);
@@ -106,7 +100,6 @@ int get_value(int key, char *value1, int *N_value2, double *V_value2){
     strcpy(p.q_name, client_name);
     p.key = key;
     strcpy(p.valor1, value1);
-    p.valor2_value = V_value2;
     p.valor2_N_p = N_value2;
 
     // mandar peticion al servidor
@@ -117,6 +110,12 @@ int get_value(int key, char *value1, int *N_value2, double *V_value2){
     if (-1 == check_errors(open_c, open_s, send_p, recv_r)){
         printf("Communications error\n");
         return -1;
+    }
+    // copiar valores
+    strcpy(value1, r.valor1);
+    *N_value2 = r.N_value2;
+    for (int i = 0; i<r.N_value2; i++){
+        V_value2[i] = r.valor2_value[i];
     }
 
     mq_close(queue_servidor);
@@ -144,7 +143,9 @@ int modify_value(int key, char *value1, int N_value2, double *V_value2){
     strcpy(p.q_name, client_name);
     p.key = key;
     strcpy(p.valor1, value1);
-    p.valor2_value = V_value2;
+    for (int i = 0; i < N_value2; i++){
+        p.valor2_value[i] = V_value2[i];
+    }
     p.valor2_N = N_value2;
 
     // mandar peticion al servidor

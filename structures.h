@@ -14,12 +14,15 @@ struct peticion {
     char valor1[MAX];
     int valor2_N;
     int* valor2_N_p;
-    double* valor2_value;
+    double valor2_value[MAX_VECTOR];
     char q_name[MAX];
 };
 
 struct respuesta {
     int status;
+    char valor1[MAX];
+    int N_value2;
+    double valor2_value[MAX_VECTOR];
 };
 
 struct tupla {
