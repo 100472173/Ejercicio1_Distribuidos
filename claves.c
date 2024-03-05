@@ -61,8 +61,9 @@ int set_value(int key, char *value1, int N_value2, double *V_value2){
     strcpy(p.q_name, client_name);
     p.key = key;
     strcpy(p.valor1, value1);
-    p.valor2_N =N_value2;
-    p.valor2_value = V_value2;
+    printf("AQUI 1\n");
+    memcpy(p.valor2_value, V_value2, N_value2* sizeof(double));
+    printf("AQUI 2\n");
 
     // mandar peticion al servidor
     int send_p = send_server(&queue_servidor, (const char *)&p, sizeof(struct peticion), 0);

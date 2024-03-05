@@ -10,12 +10,8 @@ int main(){
     int key = 1;
     char value1[20] = "Messi";
     int N_value2 = 5;
-    double *V_value2 = (double *)malloc(N_value2 * sizeof(double));
-    // llenar vector
-    for (int i = 0; i < N_value2; i++){
-        V_value2[i] = i;
-    }
-    int set_value_id = set_value(key, value1, N_value2, V_value2);
+    double V_value2[5] = {5.2, 4.1, 3.1, 2.4, 1.5};
+    int set_value_id = set_value(key, value1, N_value2, (double *) V_value2);
     printf("Set value result: %d\n", set_value_id);
 
     // int exists_id = exist(1);

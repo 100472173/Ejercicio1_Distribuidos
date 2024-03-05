@@ -53,3 +53,6 @@ dkms.conf
 
 # archivo con estructura de datos
 data_structure/
+# archivos salida
+cliente
+servidor
