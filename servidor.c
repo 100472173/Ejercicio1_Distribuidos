@@ -14,11 +14,13 @@
 #include <dirent.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <signal.h>
 
 pthread_mutex_t sync_mutex;
 bool sync_copied = false;
 pthread_cond_t sync_cond;
 mqd_t queue_servidor;
+
 
 /* La jugada es la siguiente. Primero vamos a inicializar en el main el almacen con espacio para max_tuplas.
  * Luego, cuando vayamos a añadir una tupla comprobamos si el almacen esta lleno, si está lleno duplicamos
@@ -31,17 +33,24 @@ int n_elementos = 0;
 // elmentos maximos del array
 int max_tuplas = 50;
 
+
 // TODO: hacer que termine el servidor con un temporizador
 // TODO: implementar correctamente el almacen
 // TODO: mover todas las funciones s_ y load y write_back a un .c nuevo o a structures.c
 int main ( int argc, char *argv[]){
     // Inicializamos el almacén
     almacen = (struct tupla*)malloc(max_tuplas*sizeof(struct tupla));
-    /* // cargamos los datos del almacen
+    // senial para cerrar servidor
+    struct sigaction s1;
+    s1.sa_handler = close_server; // handler es la accion
+    s1.sa_flags = 0;                // flags al usar la senial
+    sigemptyset(&(s1.sa_mask));     // el mask es empty
+    sigaction(SIGINT, &s1, NULL);
+    // cargamos los datos del almacen
     if (-1 == load()){
         fprintf(stderr, "Error al cargar el almacen del archivo binary\n");
         return -1;
-    } */
+    }
     // Inicializamos peticion y variables
     struct peticion p;
     unsigned int prio = 0;
@@ -84,10 +93,6 @@ int main ( int argc, char *argv[]){
         pthread_mutex_unlock(&sync_mutex) ;
         // Contador para los hilos
         contador++;
-    }
-    if (almacen != NULL){
-        almacen = NULL;
-        free(almacen);
     }
     return 0;
 }
@@ -148,16 +153,13 @@ void tratar_peticion (struct peticion* p){
 
 
 int s_init() {
-    
-    // TODO: quitar esto cuando este el temporizador bien.
-    almacen = NULL;
-    free(almacen);
+        
     almacen = (struct tupla *)malloc(max_tuplas * sizeof(struct tupla));
     // poner a 0 todos los elementos del almacen
     size_t elementos = max_tuplas * sizeof(struct tupla);
     memset(almacen, 0, elementos);
     // borar todas las tuplas del almacen
-    /* char file[MAX];
+    char file[MAX];
     getcwd(file, sizeof(file));
     strcat(file, "/data_structure/almacen.txt");
     // abrir fichero y sobrescribir sus contenidos
@@ -167,7 +169,7 @@ int s_init() {
         perror("open_file");
         return -1;
     }
-    fclose(f); */
+    fclose(f);
     return 0;
 
 }
@@ -287,7 +289,17 @@ int s_exist(int key) {
 
     // falta la parte del error
 }
-/* int load(){
+void close_server(){
+    // hacer el free y salir
+    printf("Closing server \n");
+    write_back();
+    free(almacen);
+    almacen = NULL;
+    exit(0);
+}
+
+
+int load(){
     // obtener directorio
     char cwd[MAX];
     getcwd(cwd, sizeof(cwd));
@@ -308,7 +320,7 @@ int s_exist(int key) {
     strcat(file, "/almacen.txt");
 
     // abrir descriptor de fichero
-    FILE *f = fopen(file, "a");
+    FILE *f = fopen(file, "a+");
     rewind(f);
     // comprobar error al abrir fichero
     if (f == NULL){
@@ -347,4 +359,4 @@ int write_back(){
     }
     fclose(f);
     return 0;
-} */
+}

@@ -15,5 +15,6 @@ int s_delete_key(int key);
 int s_exist(int key);
 int load();
 int write_back();
+void close_server();
 
 #endif //EJERCICIO1_DISTRIBUIDOS_SERVIDOR_H
