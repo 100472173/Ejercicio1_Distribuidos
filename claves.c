@@ -247,7 +247,6 @@ int open_client(mqd_t *queue_cliente){
     return *queue_cliente;
 }
 
-// TODO: tal vez haya que cambiar el tema de los exits. habra que pensarlo
 int open_server(mqd_t * queue_servidor){
     // crear nombre cola
     const static char queue_name_s[1024] = "/SERVIDOR";
