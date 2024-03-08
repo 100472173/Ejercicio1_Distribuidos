@@ -78,16 +78,16 @@ int main ( int argc, char *argv[]){
     // Abrimos la cola para lectura
     queue_servidor = mq_open("/SERVIDOR", O_CREAT | O_RDONLY, 0700, &attr_servidor);
     if (queue_servidor == -1){
-        fprintf(stderr, "Error al crear la cola de mensajes.\n");
+        perror("servidor: mq_open servidor");
         return -1;
     }
     while (1) {
         if (mq_receive(queue_servidor, (char *)&p, sizeof(struct peticion), &prio) < 0) {
-            perror("mq_recv");
+            perror("servidor: mq_recv");
             return -1;
         }
         if (pthread_create(&thid[contador], &attr, (void*)tratar_peticion, (struct perticion *) &p) != 0) {
-            perror("mq_send");
+            perror("servidor: pthread_create");
             return -1;
         }
         // Hacemos lock al mutex hasta que se copie la peticion en el hilo
@@ -140,14 +140,14 @@ void tratar_peticion (struct peticion* p){
     // Abrimos la cola del cliente
     mqd_t queue_cliente = mq_open(p_local.q_name, O_CREAT | O_WRONLY, 0700, &attr_cliente);
     if (queue_cliente == -1) {
-        fprintf(stderr, "Error al abrir la cola de mensajes del cliente.\n");
+        perror("servidor: mq_open cliente");
         mq_close(queue_servidor);
         mq_unlink("/SERVIDOR");
     }
     else {
         // Mandamos el mensaje al cliente
         if (mq_send(queue_cliente, (char*)&resp, sizeof(struct respuesta), 0) < 0) {
-            fprintf(stderr, "Error al enviar el mensaje al cliente.\n");
+            perror("servidor: mq_send");
             mq_close(queue_servidor);
             mq_unlink("/SERVIDOR");
             mq_close(queue_cliente);
@@ -179,6 +179,7 @@ int s_init() {
         return -1;
     }
     fclose(f);
+
     return 0;
 
 }
@@ -353,6 +354,14 @@ int load(){
         n_elementos++;
     }
     fclose(f);
+    // reescribir el archibo el archivo
+    FILE *f_erase = fopen(file, "w");
+    // comprobar reescribiendo el fichero
+    if (f_erase == NULL){
+        perror("rewrite file");
+        return -1;
+    }
+    fclose(f_erase);
     return 0;
 }
 // hay que ponerla cuando termine el servidor

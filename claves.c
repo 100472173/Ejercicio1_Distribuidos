@@ -242,7 +242,7 @@ int open_client(mqd_t *queue_cliente){
     attr_cliente.mq_msgsize = sizeof(struct respuesta);
     *queue_cliente = mq_open(client_name, O_CREAT | O_RDONLY, 0700, &attr_cliente);
     if (-1 == *queue_cliente){
-        perror("mq_open");
+        perror("cliente: mq_open cliente");
     }
     return *queue_cliente;
 }
@@ -257,7 +257,7 @@ int open_server(mqd_t * queue_servidor){
 
     *queue_servidor = mq_open(queue_name_s, O_CREAT| O_WRONLY, 0700, &attr_servidor);
     if (-1 == *queue_servidor){
-        perror("mq_open");
+        perror("cliente: mq_open servidor");
     }
     return *queue_servidor;
 }
@@ -265,7 +265,7 @@ int open_server(mqd_t * queue_servidor){
 int send_server(mqd_t * queue_servidor,const char * message, int size, unsigned int prio){
     int send = mq_send(*queue_servidor, message, size, prio);
     if (-1 == send){
-        perror("mq_send");
+        perror("cliente: mq_send");
         return -1;
     }
     return 0;
@@ -274,7 +274,7 @@ int send_server(mqd_t * queue_servidor,const char * message, int size, unsigned 
 int receive_client(mqd_t *queue_cliente, char *message, int size, unsigned int *prio){
     int receive = mq_receive(*queue_cliente, message, size, prio);
     if (-1 == receive){
-        perror("mq_recv");
+        perror("cliente: mq_recv");
         return -1;
     }
     return 0;
