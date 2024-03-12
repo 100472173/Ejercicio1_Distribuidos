@@ -43,18 +43,15 @@ int max_tuplas = 50;
 
 
 
-// TODO: mover todas las funciones s_ y load y write_back a un .c nuevo o a structures.c
+// TODO: fix memory leak
 int main ( int argc, char *argv[]){
     // Inicializamos el almacén
     almacen = (struct tupla*)malloc(max_tuplas*sizeof(struct tupla));
     // senial para cerrar servidor
-    struct sigaction s1;
-    s1.sa_handler = close_server; // handler es la accion
-    s1.sa_flags = 0;                // flags al usar la senial
-    sigemptyset(&(s1.sa_mask));     // el mask es empty
-    sigaction(SIGINT, &s1, NULL);
-    // cargamos los datos del almacen
-    if (-1 == load()){
+    signal(SIGINT, close_server);
+        // cargamos los datos del almacen
+        if (-1 == load())
+    {
         fprintf(stderr, "Error en servidor al cargar el almacen del archivo binary\n");
         return -1;
     }
@@ -157,10 +154,11 @@ void tratar_peticion (struct peticion* p){
     pthread_exit(0) ;
 }
 
-
 int s_init() {
     // mutex lock
     pthread_mutex_lock(&almacen_mutex);
+    free(almacen);
+    almacen = NULL;
     almacen = (struct tupla *)malloc(max_tuplas * sizeof(struct tupla));
     // poner a 0 todos los elementos del almacen
     size_t elementos = max_tuplas * sizeof(struct tupla);
@@ -311,6 +309,8 @@ void close_server(){
     write_back();
     free(almacen);
     almacen = NULL;
+    mq_close(queue_servidor);
+    mq_unlink("/SERVIDOR");
     exit(0);
 }
 
@@ -366,8 +366,6 @@ int load(){
 }
 int write_back(){
     // cerrar colas servidor
-    mq_close(queue_servidor);
-    mq_unlink("/SERVIDOR");
     char file[MAX];
     getcwd(file, sizeof(file));
     strcat(file, "/data_structure/almacen.txt");
