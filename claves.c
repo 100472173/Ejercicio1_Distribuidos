@@ -19,8 +19,17 @@ int init(){
     char client_name[MAX];
     // abrir las colas
     int open_c = open_client(&queue_cliente);
+    if (-1 == open_c){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_open queue cliente");
+        return -1;
+    }
     int open_s = open_server(&queue_servidor);
-    
+    if (-1 == open_s){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_open queue servidor");
+        return -1;
+    }
     // Rellenar la peticion
     sprintf(client_name, "%s%d", "/CLIENTE_", getpid());
     memset(&p, 0, sizeof(struct peticion));
@@ -28,18 +37,20 @@ int init(){
     strcpy(p.q_name, client_name);
     // mandar peticion al servidor
     int send_p = send_server(&queue_servidor, (const char *)&p, sizeof(struct peticion), 0);
+    if (-1 == send_p){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_send");
+        return -1;
+    }
     // recibir respuesta
     int recv_r = receive_client(&queue_cliente, (char *)&r, sizeof(struct respuesta), 0);
-    // comprobar errores
-    if (-1 == check_errors(open_c, open_s, send_p, recv_r)){
-        printf("Communications error\n");
+    if (-1 == recv_r){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_recv");
         return -1;
     }
 
-    mq_close(queue_servidor);
-    mq_close(queue_cliente);
-    mq_unlink(client_name);
-    // No sé si hay que hacer cast de r a struct respuesta
+    close_queues(&queue_servidor, &queue_cliente, client_name);
     return r.status;
 
 }
@@ -52,7 +63,17 @@ int set_value(int key, char *value1, int N_value2, double *V_value2){
     char client_name[MAX];
     // abrir las colas
     int open_c = open_client(&queue_cliente);
+    if (-1 == open_c){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_open queue cliente");
+        return -1;
+    }
     int open_s = open_server(&queue_servidor);
+    if (-1 == open_s){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_open queue servidor");
+        return -1;
+    }
     // Rellenar la peticion
     sprintf(client_name, "%s%d", "/CLIENTE_", getpid());
     memset(&p, 0, sizeof(struct peticion));
@@ -67,17 +88,19 @@ int set_value(int key, char *value1, int N_value2, double *V_value2){
     }
     // mandar peticion al servidor
     int send_p = send_server(&queue_servidor, (const char *)&p, sizeof(struct peticion), 0);
-    // recibir respuesta
-    int recv_r = receive_client(&queue_cliente, (char *)&r, sizeof(struct respuesta), 0);
-    // comprobar errores
-    if (-1 == check_errors(open_c, open_s, send_p, recv_r)){
-        printf("Communications error\n");
+    if (-1 == send_p){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_send");
         return -1;
     }
-    mq_close(queue_servidor);
-    mq_close(queue_cliente);
-    mq_unlink(client_name);
-    // No sé si hay que hacer cast de r a struct respuesta
+    // recibir respuesta
+    int recv_r = receive_client(&queue_cliente, (char *)&r, sizeof(struct respuesta), 0);
+    if (-1 == recv_r){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_recv");
+        return -1;
+    }
+    close_queues(&queue_servidor, &queue_cliente, client_name);
     return r.status;
 
 
@@ -91,8 +114,17 @@ int get_value(int key, char *value1, int *N_value2, double *V_value2){
     char client_name[MAX];
     // abrir las colas
     int open_c = open_client(&queue_cliente);
+    if (-1 == open_c){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_open queue cliente");
+        return -1;
+    }
     int open_s = open_server(&queue_servidor);
-
+    if (-1 == open_s){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_open queue servidor");
+        return -1;
+    }
     // Rellenar la peticion
     sprintf(client_name, "%s%d", "/CLIENTE_", getpid());
     memset(&p, 0, sizeof(struct peticion));
@@ -104,11 +136,16 @@ int get_value(int key, char *value1, int *N_value2, double *V_value2){
 
     // mandar peticion al servidor
     int send_p = send_server(&queue_servidor, (const char *)&p, sizeof(struct peticion), 0);
+    if (-1 == send_p){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_send");
+        return -1;
+    }
     // recibir respuesta
     int recv_r = receive_client(&queue_cliente, (char *)&r, sizeof(struct respuesta), 0);
-    // comprobar errores
-    if (-1 == check_errors(open_c, open_s, send_p, recv_r)){
-        printf("Communications error\n");
+    if (-1 == recv_r){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_recv");
         return -1;
     }
     // copiar valores
@@ -117,11 +154,7 @@ int get_value(int key, char *value1, int *N_value2, double *V_value2){
     for (int i = 0; i<r.N_value2; i++){
         V_value2[i] = r.valor2_value[i];
     }
-
-    mq_close(queue_servidor);
-    mq_close(queue_cliente);
-    mq_unlink(client_name);
-    // No sé si hay que hacer cast de r a struct respuesta
+    close_queues(&queue_servidor, &queue_cliente, client_name);
     return r.status;
 
 }
@@ -134,8 +167,17 @@ int modify_value(int key, char *value1, int N_value2, double *V_value2){
     char client_name[MAX];
     // abrir las colas
     int open_c = open_client(&queue_cliente);
+    if (-1 == open_c){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_open queue cliente");
+        return -1;
+    }
     int open_s = open_server(&queue_servidor);
-
+    if (-1 == open_s){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_open queue servidor");
+        return -1;
+    }
     // Rellenar la peticion
     sprintf(client_name, "%s%d", "/CLIENTE_", getpid());
     memset(&p, 0, sizeof(struct peticion));
@@ -150,18 +192,19 @@ int modify_value(int key, char *value1, int N_value2, double *V_value2){
 
     // mandar peticion al servidor
     int send_p = send_server(&queue_servidor, (const char *)&p, sizeof(struct peticion), 0);
-    // recibir respuesta
-    int recv_r = receive_client(&queue_cliente, (char *)&r, sizeof(struct respuesta), 0);
-    // comprobar errores
-    if (-1 == check_errors(open_c, open_s, send_p, recv_r)){
-        printf("Communications error\n");
+    if (-1 == send_p){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_send");
         return -1;
     }
-
-    mq_close(queue_servidor);
-    mq_close(queue_cliente);
-    mq_unlink(client_name);
-    // No sé si hay que hacer cast de r a struct respuesta
+    // recibir respuesta
+    int recv_r = receive_client(&queue_cliente, (char *)&r, sizeof(struct respuesta), 0);
+    if (-1 == recv_r){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_recv");
+        return -1;
+    }
+    close_queues(&queue_servidor, &queue_cliente, client_name);
     return r.status;
 
 }
@@ -172,9 +215,18 @@ int delete_key(int key){
     mqd_t queue_cliente;
     char client_name[MAX];
     // abrir las colas
-    int open_s = open_client(&queue_cliente);
-    int open_c = open_server(&queue_servidor);
-
+    int open_c = open_client(&queue_cliente);
+    if (-1 == open_c){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_open queue cliente");
+        return -1;
+    }
+    int open_s = open_server(&queue_servidor);
+    if (-1 == open_s){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_open queue servidor");
+        return -1;
+    }
     // Rellenar la peticion
     sprintf(client_name, "%s%d", "/CLIENTE_", getpid());
     memset(&p, 0, sizeof(struct peticion));
@@ -183,18 +235,19 @@ int delete_key(int key){
     p.key = key;
     // mandar peticion al servidor
     int send_p = send_server(&queue_servidor, (const char *)&p, sizeof(struct peticion), 0);
-    // recibir respuesta
-    int recv_r = receive_client(&queue_cliente, (char *)&r, sizeof(struct respuesta), 0);
-    // comprobar errores
-    if (-1 == check_errors(open_c, open_s, send_p, recv_r)){
-        printf("Communications error\n");
+    if (-1 == send_p){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_send");
         return -1;
     }
-
-    mq_close(queue_servidor);
-    mq_close(queue_cliente);
-    mq_unlink(client_name);
-    // No sé si hay que hacer cast de r a struct respuesta
+    // recibir respuesta
+    int recv_r = receive_client(&queue_cliente, (char *)&r, sizeof(struct respuesta), 0);
+    if (-1 == recv_r){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_recv");
+        return -1;
+    }
+    close_queues(&queue_servidor, &queue_cliente, client_name);
     return r.status;
 }
 
@@ -206,8 +259,17 @@ int exist(int key){
     char client_name[MAX];
     // abrir las colas
     int open_c = open_client(&queue_cliente);
+    if (-1 == open_c){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_open queue cliente");
+        return -1;
+    }
     int open_s = open_server(&queue_servidor);
-
+    if (-1 == open_s){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_open queue servidor");
+        return -1;
+    }
     // Rellenar la peticion
     sprintf(client_name, "%s%d", "/CLIENTE_", getpid());
     memset(&p, 0, sizeof(struct peticion));
@@ -216,18 +278,19 @@ int exist(int key){
     p.key = key;
     // mandar peticion al servidor
     int send_p = send_server(&queue_servidor, (const char *)&p, sizeof(struct peticion), 0);
-    // recibir respuesta
-    int recv_r = receive_client(&queue_cliente, (char *)&r, sizeof(struct respuesta), 0);
-    // comprobar errores
-    if (-1 == check_errors(open_c, open_s, send_p, recv_r)){
-        printf("Communications error\n");
+    if (-1 == send_p){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_send");
         return -1;
     }
-
-    mq_close(queue_servidor);
-    mq_close(queue_cliente);
-    mq_unlink(client_name);
-    // No sé si hay que hacer cast de r a struct respuesta
+    // recibir respuesta
+    int recv_r = receive_client(&queue_cliente, (char *)&r, sizeof(struct respuesta), 0);
+    if (-1 == recv_r){
+        close_queues(&queue_servidor, &queue_cliente, client_name);
+        perror("Error en cliente. Mq_recv");
+        return -1;
+    }
+    close_queues(&queue_servidor, &queue_cliente, client_name);
     return r.status;
 
 }
@@ -241,9 +304,6 @@ int open_client(mqd_t *queue_cliente){
     attr_cliente.mq_maxmsg = 10;
     attr_cliente.mq_msgsize = sizeof(struct respuesta);
     *queue_cliente = mq_open(client_name, O_CREAT | O_RDONLY, 0700, &attr_cliente);
-    if (-1 == *queue_cliente){
-        perror("cliente: mq_open cliente");
-    }
     return *queue_cliente;
 }
 
@@ -256,33 +316,21 @@ int open_server(mqd_t * queue_servidor){
     attr_servidor.mq_msgsize = sizeof(struct peticion);
 
     *queue_servidor = mq_open(queue_name_s, O_CREAT| O_WRONLY, 0700, &attr_servidor);
-    if (-1 == *queue_servidor){
-        perror("cliente: mq_open servidor");
-    }
     return *queue_servidor;
 }
 
 int send_server(mqd_t * queue_servidor,const char * message, int size, unsigned int prio){
     int send = mq_send(*queue_servidor, message, size, prio);
-    if (-1 == send){
-        perror("cliente: mq_send");
-        return -1;
-    }
-    return 0;
+    return send;
 }
 
 int receive_client(mqd_t *queue_cliente, char *message, int size, unsigned int *prio){
     int receive = mq_receive(*queue_cliente, message, size, prio);
-    if (-1 == receive){
-        perror("cliente: mq_recv");
-        return -1;
-    }
-    return 0;
+    return receive;
 }
-int check_errors(int open_c, int open_s, int send, int rec){
-    if (open_c == -1 || open_s == -1 || send == -1 || rec == -1){
-        return -1;
-    }
-    return 0;
+void close_queues(mqd_t *queue_servidor, mqd_t *queue_cliente, char *client_name){
+    mq_close(*queue_servidor);
+    mq_close(*queue_cliente);
+    mq_unlink(client_name);
 }
 

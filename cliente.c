@@ -6,7 +6,6 @@
 #include <stdlib.h>
 
 int main(){
-    init();
     // prueba de set value
     int key = 1;
     char value1[20] = "Messi";

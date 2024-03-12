@@ -55,7 +55,7 @@ int main ( int argc, char *argv[]){
     sigaction(SIGINT, &s1, NULL);
     // cargamos los datos del almacen
     if (-1 == load()){
-        fprintf(stderr, "Error al cargar el almacen del archivo binary\n");
+        fprintf(stderr, "Error en servidor al cargar el almacen del archivo binary\n");
         return -1;
     }
     // Inicializamos peticion y variables
@@ -78,16 +78,16 @@ int main ( int argc, char *argv[]){
     // Abrimos la cola para lectura
     queue_servidor = mq_open("/SERVIDOR", O_CREAT | O_RDONLY, 0700, &attr_servidor);
     if (queue_servidor == -1){
-        perror("servidor: mq_open servidor");
+        perror("Error en servidor. Mq_open queue servidor");
         return -1;
     }
     while (1) {
         if (mq_receive(queue_servidor, (char *)&p, sizeof(struct peticion), &prio) < 0) {
-            perror("servidor: mq_recv");
+            perror("Error en servidor. Mq_recv");
             return -1;
         }
         if (pthread_create(&thid[contador], &attr, (void*)tratar_peticion, (struct perticion *) &p) != 0) {
-            perror("servidor: pthread_create");
+            perror("Error en servidor. Pthread_create");
             return -1;
         }
         // Hacemos lock al mutex hasta que se copie la peticion en el hilo
@@ -140,14 +140,14 @@ void tratar_peticion (struct peticion* p){
     // Abrimos la cola del cliente
     mqd_t queue_cliente = mq_open(p_local.q_name, O_CREAT | O_WRONLY, 0700, &attr_cliente);
     if (queue_cliente == -1) {
-        perror("servidor: mq_open cliente");
+        perror("Error en servidor. Mq_open queue cliente");
         mq_close(queue_servidor);
         mq_unlink("/SERVIDOR");
     }
     else {
         // Mandamos el mensaje al cliente
         if (mq_send(queue_cliente, (char*)&resp, sizeof(struct respuesta), 0) < 0) {
-            perror("servidor: mq_send");
+            perror("Error en servidor. Mq_send");
             mq_close(queue_servidor);
             mq_unlink("/SERVIDOR");
             mq_close(queue_cliente);
@@ -175,7 +175,7 @@ int s_init() {
     FILE * f = fopen(file, "w");
     // error al abrir el fichero
     if (NULL == f){
-        perror("open_file");
+        perror("Error en servidor al abrir el fichero");
         return -1;
     }
     fclose(f);
@@ -307,7 +307,7 @@ int s_exist(int key) {
 }
 void close_server(){
     // hacer el free y salir
-    printf("\nClosing server \n");
+    printf("\n Closing server \n");
     write_back();
     free(almacen);
     almacen = NULL;
@@ -340,7 +340,7 @@ int load(){
     rewind(f);
     // comprobar error al abrir fichero
     if (f == NULL){
-        perror("open_file");
+        perror("Error en servidor al abrir el fichero");
         return -1;
     }
     // bucle para ir leyendo elementos
@@ -358,14 +358,16 @@ int load(){
     FILE *f_erase = fopen(file, "w");
     // comprobar reescribiendo el fichero
     if (f_erase == NULL){
-        perror("rewrite file");
+        perror("Error en servidor al reescribir el fichero");
         return -1;
     }
     fclose(f_erase);
     return 0;
 }
-// hay que ponerla cuando termine el servidor
 int write_back(){
+    // cerrar colas servidor
+    mq_close(queue_servidor);
+    mq_unlink("/SERVIDOR");
     char file[MAX];
     getcwd(file, sizeof(file));
     strcat(file, "/data_structure/almacen.txt");
@@ -373,7 +375,7 @@ int write_back(){
     FILE *f = fopen(file, "w");
     // comprobar error al abrir archivo
     if (f == NULL){
-        perror("open_file");
+        perror("Error en servidor al abrir el fichero");
         return -1;
     }
     // bucle para escribir en archivo

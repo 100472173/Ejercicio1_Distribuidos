@@ -107,6 +107,6 @@ int send_server(mqd_t *queue_servidor, const char *message, int size, unsigned i
 
 int receive_client(mqd_t *queue_cliente, char *message, int size, unsigned int *prio);
 
-int check_errors(int open_c, int open_s, int send, int rec);
+void close_queues(mqd_t *queue_servidor, mqd_t *queue_cliente, char *client_name);
 
 #endif //EJERCICIO1_DISTRIBUIDOS_CLAVES_H
