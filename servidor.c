@@ -43,15 +43,14 @@ int max_tuplas = 50;
 
 
 
-// TODO: fix memory leak
-int main ( int argc, char *argv[]){
+
+int main (){
     // Inicializamos el almacén
     almacen = (struct tupla*)malloc(max_tuplas*sizeof(struct tupla));
     // senial para cerrar servidor
     signal(SIGINT, close_server);
         // cargamos los datos del almacen
-        if (-1 == load())
-    {
+        if (-1 == load()){
         fprintf(stderr, "Error en servidor al cargar el almacen del archivo binary\n");
         return -1;
     }
@@ -83,7 +82,7 @@ int main ( int argc, char *argv[]){
             perror("Error en servidor. Mq_recv");
             return -1;
         }
-        if (pthread_create(&thid[contador], &attr, (void*)tratar_peticion, (struct perticion *) &p) != 0) {
+        if (pthread_create(&thid[contador], &attr, tratar_peticion, (struct perticion *) &p) != 0) {
             perror("Error en servidor. Pthread_create");
             return -1;
         }
@@ -100,7 +99,8 @@ int main ( int argc, char *argv[]){
     return 0;
 }
 
-void tratar_peticion (struct peticion* p){
+void * tratar_peticion (void* pp){
+    struct peticion * p = pp;
     struct mq_attr attr_cliente;
     attr_cliente.mq_maxmsg = 10;
     attr_cliente.mq_msgsize = sizeof(struct respuesta);
@@ -151,20 +151,23 @@ void tratar_peticion (struct peticion* p){
             mq_unlink(p_local.q_name);
         }
     }
-    pthread_exit(0) ;
+    return NULL;
+    // pthread_exit(0) ;
 }
 
 int s_init() {
     // mutex lock
     pthread_mutex_lock(&almacen_mutex);
     free(almacen);
+    // Cada vez que haces free del almacen y lo pones a 0. Cuando un nuevo servidor
+    // viene es posible que lo liberes a la vez que otro cliente esta borrando
+    // Ya pero en el otro no tienes mutex
     almacen = NULL;
     almacen = (struct tupla *)malloc(max_tuplas * sizeof(struct tupla));
     // poner a 0 todos los elementos del almacen
     size_t elementos = max_tuplas * sizeof(struct tupla);
     memset(almacen, 0, elementos);
     // mutex unlock
-    pthread_mutex_unlock(&almacen_mutex);
     // borar todas las tuplas del almacen
     char file[MAX];
     getcwd(file, sizeof(file));
@@ -177,33 +180,37 @@ int s_init() {
         return -1;
     }
     fclose(f);
+    pthread_mutex_unlock(&almacen_mutex);
 
     return 0;
 
 }
 
 int s_set_value(int key, char *valor1, int valor2_N, double *valor2_value) {
+    // bloquear el mutex
+    pthread_mutex_lock(&almacen_mutex);
     // comprobar errores
     // rango valor2n
     if (valor2_N < 1 || valor2_N > 32){
         fprintf(stderr, "Error: N_value2 no esta en el rango [1,32].\n");
+        pthread_mutex_unlock(&almacen_mutex);
         return -1;
     }
     // comprobar la existencia de key
     // iterar por el almacen
+    
     for (int i = 0; i < n_elementos; i++){
         if (almacen[i].clave == key){
             fprintf(stderr, "Error: Ya existe la key en el almacen. \n");
+            pthread_mutex_unlock(&almacen_mutex);
             return -1;
         }
     }
     // comprobar el tamanio de almacen
     if (n_elementos == max_tuplas){
         // duplicar tamanio de almacen
-        pthread_mutex_lock(&almacen_mutex);
         almacen = realloc(almacen, 2 * max_tuplas * sizeof(struct tupla));
         max_tuplas = max_tuplas * 2;
-        pthread_mutex_unlock(&almacen_mutex);
     }
 
     // crear tupla de insercion
@@ -216,9 +223,10 @@ int s_set_value(int key, char *valor1, int valor2_N, double *valor2_value) {
         insertar.valor2_value[i] = valor2_value[i];
     }
     // agregar a almacen
-    pthread_mutex_lock(&almacen_mutex);
+    
     almacen[n_elementos] = insertar;
     n_elementos++;
+    // desbloquear mutex
     pthread_mutex_unlock(&almacen_mutex);
     // devolver valor
     return 0;
@@ -226,6 +234,7 @@ int s_set_value(int key, char *valor1, int valor2_N, double *valor2_value) {
 
 int s_get_value(int key, char *valor1, int *valor2_N, double *valor2_value){
     // iterar por el almacen
+    pthread_mutex_lock(&almacen_mutex);
     int existe = -1;
     for (int i = 0; i < n_elementos; i++){
         if (almacen[i].clave == key){
@@ -238,23 +247,27 @@ int s_get_value(int key, char *valor1, int *valor2_N, double *valor2_value){
             }
         }
     }
+    pthread_mutex_unlock(&almacen_mutex);
     // devolver valor
     return existe;
 }
 
 int s_modify_value(int key, char *valor1, int valor2_N, double *valor2_value) {
+    pthread_mutex_lock(&almacen_mutex);
     // comprobar error fuera de rango
     if (valor2_N < 1 || valor2_N > 32){
         fprintf(stderr, "Error: N_value2 no esta en el rango [1,32].\n");
+        pthread_mutex_unlock(&almacen_mutex);
         return -1;
     }
     // iterar por almacen
+    
     int existe = -1;
     for (int i = 0; i < n_elementos; i++){
         if (almacen[i].clave == key){
+            
             existe = 0;
             // modificar valores
-            pthread_mutex_lock(&almacen_mutex);
             strcpy(almacen[i].valor1, valor1);
             almacen[i].valor2_N = valor2_N;
             // // igualar todo el vector a 0
@@ -263,13 +276,14 @@ int s_modify_value(int key, char *valor1, int valor2_N, double *valor2_value) {
             for (int j = 0; j<valor2_N; j++){
                 almacen[i].valor2_value[j] = valor2_value[j];
             }
-            pthread_mutex_unlock(&almacen_mutex);
         }
     }
+    pthread_mutex_unlock(&almacen_mutex);
     return existe;
 }
 
 int s_delete_key(int key) {
+    // pthread_mutex_lock(&almacen_mutex);
     int existe = -1;
     // iterar por el almacen
     for (int i = 0; i < n_elementos; i++){
@@ -277,20 +291,21 @@ int s_delete_key(int key) {
             existe = 0;
             // esto funciona si el orden de las tuplas no importa. Sino hay que cambiarlo
             // copiar ultimo elemento del almacen al indice
-            pthread_mutex_lock(&almacen_mutex);
             almacen[i] = almacen[n_elementos-1];
             // borrar ultimo elemento del almacen
-            size_t elementos = sizeof(struct tupla);
-            memset(almacen + ((n_elementos-1)*sizeof(struct tupla)), 0, elementos);
+            struct tupla tupla_vacia;
+            memset(&tupla_vacia, 0, sizeof(struct tupla));
+            almacen[n_elementos-1] = tupla_vacia;
             // bajar el numero de elementos
             n_elementos--;
-            pthread_mutex_unlock(&almacen_mutex);
         }
     }
+    // pthread_mutex_unlock(&almacen_mutex);
     return existe;
 }
 
 int s_exist(int key) {
+    pthread_mutex_lock(&almacen_mutex);
     int existe = 0;
     // iterar por el almacen
     for (int i = 0; i<n_elementos; i++){
@@ -298,11 +313,13 @@ int s_exist(int key) {
             existe = 1;
         }
     }
+    pthread_mutex_unlock(&almacen_mutex);
     // devolver existencia
     return existe;
-
+   
     // falta la parte del error
 }
+
 void close_server(){
     // hacer el free y salir
     printf("\n Closing server \n");
@@ -313,7 +330,6 @@ void close_server(){
     mq_unlink("/SERVIDOR");
     exit(0);
 }
-
 
 int load(){
     // obtener directorio
@@ -346,7 +362,7 @@ int load(){
     // bucle para ir leyendo elementos
     while(fread(&almacen[n_elementos], sizeof(struct tupla), 1, f) == 1){
         // comprobar el tamanio de almacen
-        if (n_elementos == max_tuplas){
+        if (n_elementos == max_tuplas-1){
             // duplicar tamanio de almacen
             almacen = realloc(almacen, 2 * max_tuplas * sizeof(struct tupla));
             max_tuplas = max_tuplas * 2;

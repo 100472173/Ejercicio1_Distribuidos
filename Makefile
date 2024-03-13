@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -Wall -Werror -lrt
+CFLAGS = -g -Wall -Werror -lrt -Wextra -pedantic -std=c11
 c_files = $(wildcard *.c)
 object_files = $(c_files:.c=.o)
 targets = cliente servidor
