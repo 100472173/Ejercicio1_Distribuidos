@@ -283,7 +283,7 @@ int s_modify_value(int key, char *valor1, int valor2_N, double *valor2_value) {
 }
 
 int s_delete_key(int key) {
-    // pthread_mutex_lock(&almacen_mutex);
+    pthread_mutex_lock(&almacen_mutex);
     int existe = -1;
     // iterar por el almacen
     for (int i = 0; i < n_elementos; i++){
@@ -300,7 +300,7 @@ int s_delete_key(int key) {
             n_elementos--;
         }
     }
-    // pthread_mutex_unlock(&almacen_mutex);
+    pthread_mutex_unlock(&almacen_mutex);
     return existe;
 }
 
