@@ -203,11 +203,15 @@ int s_set_value(int key, char *valor1, int valor2_N, double *valor2_value) {
         pthread_mutex_unlock(&almacen_mutex);
         return -1;
     }
+    // error mas de 256 caracteres
+    if (strlen(valor1)>MAX){
+        fprintf(stderr, "Error: la cadena valor1 tiene mas de 256 caracteres.\n");
+        pthread_mutex_unlock(&almacen_mutex);
+        return -1;
+    }
     // comprobar la existencia de key
     // iterar por el almacen
-    
     for (int i = 0; i < n_elementos; i++){
-        printf("%d %d \n", almacen[i].clave, key);
         if (almacen[i].clave == key){
             fprintf(stderr, "Error: Ya existe la key en el almacen. \n");
             pthread_mutex_unlock(&almacen_mutex);
@@ -230,11 +234,9 @@ int s_set_value(int key, char *valor1, int valor2_N, double *valor2_value) {
     for (int i = 0; i < valor2_N; i++) {
         insertar.valor2_value[i] = valor2_value[i];
     }
-    printf("%d \n", insertar.clave);
     // agregar a almacen
     
     almacen[n_elementos] = insertar;
-    printf("%d\n", almacen[n_elementos].clave);
     n_elementos++;
     // desbloquear mutex
     pthread_mutex_unlock(&almacen_mutex);
@@ -267,6 +269,12 @@ int s_modify_value(int key, char *valor1, int valor2_N, double *valor2_value) {
     // comprobar error fuera de rango
     if (valor2_N < 1 || valor2_N > 32){
         fprintf(stderr, "Error: N_value2 no esta en el rango [1,32].\n");
+        pthread_mutex_unlock(&almacen_mutex);
+        return -1;
+    }
+    // error mas de 256 caracteres
+    if (strlen(valor1)>MAX){
+        fprintf(stderr, "Error: la cadena valor1 tiene mas de 256 caracteres.\n");
         pthread_mutex_unlock(&almacen_mutex);
         return -1;
     }
