@@ -100,7 +100,6 @@ int main (){
 }
 
 void * tratar_peticion (void* pp){
-    struct peticion * p = pp;
     struct mq_attr attr_cliente;
     attr_cliente.mq_maxmsg = 10;
     attr_cliente.mq_msgsize = sizeof(struct respuesta);
@@ -109,6 +108,7 @@ void * tratar_peticion (void* pp){
     struct respuesta resp;
     // Adquirimos el mutex para copiar la peticion pasada por parametro
     pthread_mutex_lock(&sync_mutex);
+    struct peticion *p = pp;
     p_local = *p;
     sync_copied = true;
     pthread_cond_signal(&sync_cond);
@@ -198,7 +198,6 @@ int s_set_value(int key, char *valor1, int valor2_N, double *valor2_value) {
     }
     // comprobar la existencia de key
     // iterar por el almacen
-    
     for (int i = 0; i < n_elementos; i++){
         if (almacen[i].clave == key){
             fprintf(stderr, "Error: Ya existe la key en el almacen. \n");
