@@ -17,16 +17,14 @@ int init(){
     mqd_t queue_servidor;
     mqd_t queue_cliente;
     char client_name[MAX];
-    // abrir las colas
-    int open_c = open_client(&queue_cliente);
-    if (-1 == open_c){
-        close_queues(&queue_servidor, &queue_cliente, client_name);
+    open_client(&queue_cliente, client_name);
+    if (-1 == queue_cliente){
         perror("Error en cliente. Mq_open queue cliente");
         return -1;
     }
-    int open_s = open_server(&queue_servidor);
-    if (-1 == open_s){
-        close_queues(&queue_servidor, &queue_cliente, client_name);
+    open_server(&queue_servidor);
+    if (-1 == queue_servidor){
+        close_client(&queue_cliente, client_name);
         perror("Error en cliente. Mq_open queue servidor");
         return -1;
     }
@@ -49,7 +47,6 @@ int init(){
         perror("Error en cliente. Mq_recv");
         return -1;
     }
-
     close_queues(&queue_servidor, &queue_cliente, client_name);
     return r.status;
 
@@ -61,16 +58,14 @@ int set_value(int key, char *value1, int N_value2, double *V_value2){
     mqd_t queue_servidor;
     mqd_t queue_cliente;
     char client_name[MAX];
-    // abrir las colas
-    int open_c = open_client(&queue_cliente);
-    if (-1 == open_c){
-        close_queues(&queue_servidor, &queue_cliente, client_name);
+    open_client(&queue_cliente, client_name);
+    if (-1 == queue_cliente){
         perror("Error en cliente. Mq_open queue cliente");
         return -1;
     }
-    int open_s = open_server(&queue_servidor);
-    if (-1 == open_s){
-        close_queues(&queue_servidor, &queue_cliente, client_name);
+    open_server(&queue_servidor);
+    if (-1 == queue_servidor){
+        close_client(&queue_cliente, client_name);
         perror("Error en cliente. Mq_open queue servidor");
         return -1;
     }
@@ -112,16 +107,14 @@ int get_value(int key, char *value1, int *N_value2, double *V_value2){
     mqd_t queue_servidor;
     mqd_t queue_cliente;
     char client_name[MAX];
-    // abrir las colas
-    int open_c = open_client(&queue_cliente);
-    if (-1 == open_c){
-        close_queues(&queue_servidor, &queue_cliente, client_name);
+    open_client(&queue_cliente, client_name);
+    if (-1 == queue_cliente){
         perror("Error en cliente. Mq_open queue cliente");
         return -1;
     }
-    int open_s = open_server(&queue_servidor);
-    if (-1 == open_s){
-        close_queues(&queue_servidor, &queue_cliente, client_name);
+    open_server(&queue_servidor);
+    if (-1 == queue_servidor){
+        close_client(&queue_cliente, client_name);
         perror("Error en cliente. Mq_open queue servidor");
         return -1;
     }
@@ -137,7 +130,6 @@ int get_value(int key, char *value1, int *N_value2, double *V_value2){
     // mandar peticion al servidor
     int send_p = send_server(&queue_servidor, (const char *)&p, sizeof(struct peticion), 0);
     if (-1 == send_p){
-        close_queues(&queue_servidor, &queue_cliente, client_name);
         perror("Error en cliente. Mq_send");
         return -1;
     }
@@ -165,16 +157,14 @@ int modify_value(int key, char *value1, int N_value2, double *V_value2){
     mqd_t queue_servidor;
     mqd_t queue_cliente;
     char client_name[MAX];
-    // abrir las colas
-    int open_c = open_client(&queue_cliente);
-    if (-1 == open_c){
-        close_queues(&queue_servidor, &queue_cliente, client_name);
+    open_client(&queue_cliente, client_name);
+    if (-1 == queue_cliente){
         perror("Error en cliente. Mq_open queue cliente");
         return -1;
     }
-    int open_s = open_server(&queue_servidor);
-    if (-1 == open_s){
-        close_queues(&queue_servidor, &queue_cliente, client_name);
+    open_server(&queue_servidor);
+    if (-1 == queue_servidor){
+        close_client(&queue_cliente, client_name);
         perror("Error en cliente. Mq_open queue servidor");
         return -1;
     }
@@ -214,16 +204,15 @@ int delete_key(int key){
     mqd_t queue_servidor;
     mqd_t queue_cliente;
     char client_name[MAX];
-    // abrir las colas
-    int open_c = open_client(&queue_cliente);
-    if (-1 == open_c){
-        close_queues(&queue_servidor, &queue_cliente, client_name);
+    open_client(&queue_cliente, client_name);
+
+    if (-1 == queue_cliente){
         perror("Error en cliente. Mq_open queue cliente");
         return -1;
     }
-    int open_s = open_server(&queue_servidor);
-    if (-1 == open_s){
-        close_queues(&queue_servidor, &queue_cliente, client_name);
+    open_server(&queue_servidor);
+    if (-1 == queue_servidor){
+        close_client(&queue_cliente, client_name);
         perror("Error en cliente. Mq_open queue servidor");
         return -1;
     }
@@ -257,16 +246,15 @@ int exist(int key){
     mqd_t queue_servidor;
     mqd_t queue_cliente;
     char client_name[MAX];
-    // abrir las colas
-    int open_c = open_client(&queue_cliente);
-    if (-1 == open_c){
-        close_queues(&queue_servidor, &queue_cliente, client_name);
+    open_client(&queue_cliente, client_name);
+
+    if (-1 == queue_cliente){
         perror("Error en cliente. Mq_open queue cliente");
         return -1;
     }
-    int open_s = open_server(&queue_servidor);
-    if (-1 == open_s){
-        close_queues(&queue_servidor, &queue_cliente, client_name);
+    open_server(&queue_servidor);
+    if (-1 == queue_servidor){
+        close_client(&queue_cliente, client_name);
         perror("Error en cliente. Mq_open queue servidor");
         return -1;
     }
@@ -295,28 +283,23 @@ int exist(int key){
 
 }
 
-int open_client(mqd_t *queue_cliente){
-    char client_name[MAX];
-    // crear nombre de la cola
+void open_client(mqd_t *queue_cliente, char *client_name){
     sprintf(client_name, "%s%d", "/CLIENTE_", getpid());
     // abrir cola cliente
     struct mq_attr attr_cliente;
     attr_cliente.mq_maxmsg = 10;
     attr_cliente.mq_msgsize = sizeof(struct respuesta);
     *queue_cliente = mq_open(client_name, O_CREAT | O_RDONLY, 0700, &attr_cliente);
-    return *queue_cliente;
 }
 
-int open_server(mqd_t * queue_servidor){
+void open_server(mqd_t * queue_servidor){
     // crear nombre cola
     const static char queue_name_s[1024] = "/SERVIDOR";
     // abrir cola servidor
     struct mq_attr attr_servidor;
     attr_servidor.mq_maxmsg = 10;
     attr_servidor.mq_msgsize = sizeof(struct peticion);
-
     *queue_servidor = mq_open(queue_name_s, O_CREAT| O_WRONLY, 0700, &attr_servidor);
-    return *queue_servidor;
 }
 
 int send_server(mqd_t * queue_servidor,const char * message, int size, unsigned int prio){
@@ -330,6 +313,11 @@ int receive_client(mqd_t *queue_cliente, char *message, int size, unsigned int *
 }
 void close_queues(mqd_t *queue_servidor, mqd_t *queue_cliente, char *client_name){
     mq_close(*queue_servidor);
+    mq_close(*queue_cliente);
+    mq_unlink(client_name);
+}
+
+void close_client(mqd_t *queue_cliente, char *client_name) {
     mq_close(*queue_cliente);
     mq_unlink(client_name);
 }

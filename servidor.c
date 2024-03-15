@@ -154,6 +154,8 @@ void * tratar_peticion (void* pp){
             mq_close(queue_cliente);
             mq_unlink(p_local.q_name);
         }
+        mq_close(queue_cliente);
+        mq_unlink(p_local.q_name);
     }
 
     return NULL;
@@ -205,6 +207,7 @@ int s_set_value(int key, char *valor1, int valor2_N, double *valor2_value) {
     // iterar por el almacen
     
     for (int i = 0; i < n_elementos; i++){
+        printf("%d %d \n", almacen[i].clave, key);
         if (almacen[i].clave == key){
             fprintf(stderr, "Error: Ya existe la key en el almacen. \n");
             pthread_mutex_unlock(&almacen_mutex);
@@ -227,9 +230,11 @@ int s_set_value(int key, char *valor1, int valor2_N, double *valor2_value) {
     for (int i = 0; i < valor2_N; i++) {
         insertar.valor2_value[i] = valor2_value[i];
     }
+    printf("%d \n", insertar.clave);
     // agregar a almacen
     
     almacen[n_elementos] = insertar;
+    printf("%d\n", almacen[n_elementos].clave);
     n_elementos++;
     // desbloquear mutex
     pthread_mutex_unlock(&almacen_mutex);
@@ -375,6 +380,7 @@ int load(){
         n_elementos++;
     }
     fclose(f);
+    /*
     // reescribir el archibo el archivo
     FILE *f_erase = fopen(file, "w");
     // comprobar reescribiendo el fichero
@@ -383,6 +389,7 @@ int load(){
         return -1;
     }
     fclose(f_erase);
+     */
     return 0;
 }
 int write_back(){

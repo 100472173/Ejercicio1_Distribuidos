@@ -99,14 +99,15 @@ int delete_key(int key);
 int exist(int key);
 
 // funciones necesarias para clientes
-int open_server(mqd_t * queue_servidor);
+void open_server(mqd_t * queue_servidor);
 
-int open_client(mqd_t *queue_cliente);
+void open_client(mqd_t *queue_cliente, char *client_name);
 
 int send_server(mqd_t *queue_servidor, const char *message, int size, unsigned int prio);
 
 int receive_client(mqd_t *queue_cliente, char *message, int size, unsigned int *prio);
 
 void close_queues(mqd_t *queue_servidor, mqd_t *queue_cliente, char *client_name);
+void close_client(mqd_t *queue_cliente, char *client_name);
 
 #endif //EJERCICIO1_DISTRIBUIDOS_CLAVES_H
