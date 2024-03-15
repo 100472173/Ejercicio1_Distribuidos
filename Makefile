@@ -1,12 +1,16 @@
 CC = gcc
-CFLAGS = -g -Wall -Werror -lrt -Wextra -pedantic -std=c11
+CFLAGS = -g -Wall -Werror -lrt -Wextra -pedantic -std=c11 
 c_files = $(wildcard *.c)
 object_files = $(c_files:.c=.o)
 targets = cliente servidor
 library = libclaves.so
-.PHONY: all clean
-all: $(targets)
+.PHONY: all clean run_s run_c
+all: $(targets) 
 
+run_s: all
+	./servidor
+run_c: all
+	./cliente
 servidor: servidor.o
 	@echo "Compiling $@ ..."
 	$(CC)  $< -o $@ 
@@ -14,7 +18,7 @@ servidor: servidor.o
 # enlazar libreria dinamica con objeto clientes
 cliente: cliente.o $(library) 
 	@echo "Compiling $@ with $^"
-	$(CC) -o $@ $< -L. -lclaves
+	$(CC) -o $@ $< -L. -lclaves -Wl,-rpath=.
 
 # compilar el .c a un objeto .o
 claves.o: claves.c
