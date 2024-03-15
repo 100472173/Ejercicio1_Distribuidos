@@ -34,12 +34,13 @@ int main(void)
 
     switch (random_operation)
     {
-    // case 0:
-    //     printf("Operación 'init' para la clave %d\n del pid %d", random_key, getpid());
-    //     if (init() == -1){
-    //         fprintf(stderr, "Error en init para la clave %d\n del pid %d", random_key, getpid());
-    //     }
-    //     break;
+    case 0:
+        printf("Operación 'init' para la clave %d\n del pid %d", random_key, getpid());
+        if (init() == -1){
+            fprintf(stderr, "Error en init para la clave %d\n del pid %d", random_key, getpid());
+        }
+        break;
+    
     case 1: // Operación 'set'
     {
         double values[3] = {1.5, 2.5, 3.5};

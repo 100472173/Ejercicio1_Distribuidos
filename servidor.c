@@ -113,6 +113,26 @@ void * tratar_peticion (void* pp){
     sync_copied = true;
     pthread_cond_signal(&sync_cond);
     pthread_mutex_unlock(&sync_mutex);
+    // Abrimos la cola del cliente
+    mqd_t queue_cliente = mq_open(p_local.q_name, O_CREAT | O_WRONLY, 0700, &attr_cliente);
+    if (queue_cliente == -1)
+    {
+        perror("Error en servidor. Mq_open queue cliente");
+        mq_close(queue_servidor);
+        mq_unlink("/SERVIDOR");
+    }
+    else
+    {
+        // Mandamos el mensaje al cliente
+        if (mq_send(queue_cliente, (char *)&resp, sizeof(struct respuesta), 0) < 0)
+        {
+            perror("Error en servidor. Mq_send");
+            mq_close(queue_servidor);
+            mq_unlink("/SERVIDOR");
+            mq_close(queue_cliente);
+            mq_unlink(p_local.q_name);
+        }
+    }
     // En funcion de la operacion especificada en la operacion hacemos una u otra operacion
     switch (p_local.op){
     case 0:
@@ -134,23 +154,7 @@ void * tratar_peticion (void* pp){
         resp.status = s_exist(p_local.key);
         break;
     }
-    // Abrimos la cola del cliente
-    mqd_t queue_cliente = mq_open(p_local.q_name, O_CREAT | O_WRONLY, 0700, &attr_cliente);
-    if (queue_cliente == -1) {
-        perror("Error en servidor. Mq_open queue cliente");
-        mq_close(queue_servidor);
-        mq_unlink("/SERVIDOR");
-    }
-    else {
-        // Mandamos el mensaje al cliente
-        if (mq_send(queue_cliente, (char*)&resp, sizeof(struct respuesta), 0) < 0) {
-            perror("Error en servidor. Mq_send");
-            mq_close(queue_servidor);
-            mq_unlink("/SERVIDOR");
-            mq_close(queue_cliente);
-            mq_unlink(p_local.q_name);
-        }
-    }
+    
     return NULL;
     // pthread_exit(0) ;
 }
