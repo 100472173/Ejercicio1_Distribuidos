@@ -24,13 +24,14 @@
     printf("Delete key result: %d.\n", get_value_id);
  
 } */
+// TODO: fix tests
 int main(void)
 {
     srand(time(NULL) * getpid()); // Inicialización adecuada de la semilla
 
     // Generación aleatoria de la operación y la clave
     int random_operation = rand() % 6;
-    int random_key = (rand() % 100) + 1; // Clave en el rango de 1 a 10
+    int random_key = (rand() % 5) + 1; // Clave en el rango de 1 a 10
 
     switch (random_operation)
     {
