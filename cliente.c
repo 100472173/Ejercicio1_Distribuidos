@@ -6,8 +6,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
-
-/* int main(){
+#include <string.h>
+/*
+int main(){
     // prueba de set value
     int key = 1;
     char value1[20] = "Messi";
@@ -23,8 +24,8 @@
     int get_value_id = delete_key(1);
     printf("Delete key result: %d.\n", get_value_id);
  
-} */
-// TODO: fix tests
+}
+*/
 int main(void)
 {
     srand(time(NULL) * getpid()); // Inicialización adecuada de la semilla
@@ -94,3 +95,6 @@ int main(void)
 
     return 0;
 }
+
+
+

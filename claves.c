@@ -58,6 +58,14 @@ int set_value(int key, char *value1, int N_value2, double *V_value2){
     mqd_t queue_servidor;
     mqd_t queue_cliente;
     char client_name[MAX];
+    if (N_value2 < 1 || N_value2 > 32){
+        fprintf(stderr, "Error: N_value2 no esta en el rango [1,32].\n");
+        return -1;
+    }
+    if (strlen(value1)>MAX){
+        fprintf(stderr, "Error: la cadena valor1 tiene mas de 256 caracteres.\n");
+        return -1;
+    }
     open_client(&queue_cliente, client_name);
     if (-1 == queue_cliente){
         perror("Error en cliente. Mq_open queue cliente");
@@ -71,6 +79,7 @@ int set_value(int key, char *value1, int N_value2, double *V_value2){
     }
     // Rellenar la peticion
     sprintf(client_name, "%s%d", "/CLIENTE_", getpid());
+
     memset(&p, 0, sizeof(struct peticion));
     p.op = 1;
     strcpy(p.q_name, client_name);
@@ -107,6 +116,10 @@ int get_value(int key, char *value1, int *N_value2, double *V_value2){
     mqd_t queue_servidor;
     mqd_t queue_cliente;
     char client_name[MAX];
+    if (strlen(value1)>MAX){
+        fprintf(stderr, "Error: la cadena valor1 tiene mas de 256 caracteres.\n");
+        return -1;
+    }
     open_client(&queue_cliente, client_name);
     if (-1 == queue_cliente){
         perror("Error en cliente. Mq_open queue cliente");
@@ -124,8 +137,6 @@ int get_value(int key, char *value1, int *N_value2, double *V_value2){
     p.op = 2;
     strcpy(p.q_name, client_name);
     p.key = key;
-    strcpy(p.valor1, value1);
-    p.valor2_N_p = N_value2;
 
     // mandar peticion al servidor
     int send_p = send_server(&queue_servidor, (const char *)&p, sizeof(struct peticion), 0);
@@ -157,6 +168,14 @@ int modify_value(int key, char *value1, int N_value2, double *V_value2){
     mqd_t queue_servidor;
     mqd_t queue_cliente;
     char client_name[MAX];
+    if (N_value2 < 1 || N_value2 > 32){
+        fprintf(stderr, "Error: N_value2 no esta en el rango [1,32].\n");
+        return -1;
+    }
+    if (strlen(value1)>MAX){
+        fprintf(stderr, "Error: la cadena valor1 tiene mas de 256 caracteres.\n");
+        return -1;
+    }
     open_client(&queue_cliente, client_name);
     if (-1 == queue_cliente){
         perror("Error en cliente. Mq_open queue cliente");
