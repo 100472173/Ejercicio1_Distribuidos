@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <string.h>
 
+
 int main(void)
 {
     srand(time(NULL) * getpid()); // Inicialización adecuada de la semilla
@@ -43,7 +44,7 @@ int main(void)
         printf("Cliente con pid %d, operación 'modify_value'\n", getpid());
         double values_m[3] = {4.5, 5.5, 6.5};
         printf("Cliente con pid %d, la clave es %d y la tupla por la que se va a sustituir es {value2, 3, [%f, %f, %f]}\n", getpid(), random_key, values_m[0], values_m[1], values_m[2]);
-        int modify_value_result = modify_value(random_key, "value", 3, (double *)values_m);
+        int modify_value_result = modify_value(random_key, "value_m", 3, (double *)values_m);
         printf("Cliente con pid %d, resultado de la operación 'modify_value' para la clave %d es %d\n", getpid(), random_key, modify_value_result);
         break;
     case 4: // Operación 'delete'
@@ -57,9 +58,5 @@ int main(void)
         printf("Cliente con pid %d, resultado de la operación 'exist' para la clave %d es %d\n", getpid(), random_key, exist_result);
         break;
     }
-    printf("Cliente con pid %d, he terminado la función\n", getpid());
     return 0;
 }
-
-
-
