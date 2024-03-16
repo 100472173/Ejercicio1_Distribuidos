@@ -2,21 +2,24 @@ CC = gcc
 CFLAGS = -g -Wall -Werror -lrt -Wextra -pedantic -std=c11 
 c_files = $(wildcard *.c)
 object_files = $(c_files:.c=.o)
-targets = cliente servidor
+targets = cliente servidor prueba_sec
 library = libclaves.so
-.PHONY: all clean run_s run_c
+.PHONY: all clean
 all: $(targets) 
 
-run_s: all
-	./servidor
-run_c: all
-	./cliente
+# este ejecutable es el servidor
 servidor: servidor.o
 	@echo "Compiling $@ ..."
 	$(CC)  $< -o $@ 
 
 # enlazar libreria dinamica con objeto clientes
+# este ejecutable es un cliente concurrente
 cliente: cliente.o $(library) 
+	@echo "Compiling $@ with $^"
+	$(CC) -o $@ $< -L. -lclaves -Wl,-rpath=.
+
+# compilar el archivo de pruebas secuenciales
+prueba_sec: pruebas_secuenciales.o $(library)
 	@echo "Compiling $@ with $^"
 	$(CC) -o $@ $< -L. -lclaves -Wl,-rpath=.
 
@@ -29,7 +32,7 @@ claves.o: claves.c
 $(library): claves.o
 	@echo "Creating dynamic library file from: $< ..."
 	$(CC) -shared -o $@ $^
-
+# compilar los archivos c a objetos
 %.o: %.c
 	@echo "Creating object file from: $< ..."
 	$(CC) -c $(CFLAGS) $< -o $@
