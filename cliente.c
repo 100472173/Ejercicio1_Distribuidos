@@ -7,92 +7,57 @@
 #include <time.h>
 #include <unistd.h>
 #include <string.h>
-/*
-int main(){
-    // prueba de set value
-    int key = 1;
-    char value1[20] = "Messi";
-    int N_value2 = 5;
-    double V_value2[5] = {5.5, 4.5, 3.5, 2.5, 1.5};
-    int set_value_id = set_value(key, value1, N_value2, (double *) V_value2);
-    printf("Set value result: %d\n", set_value_id);
 
-    // delete key
-    // char value[256];
-    // double vector[32];
-    // int n_value;
-    int get_value_id = delete_key(1);
-    printf("Delete key result: %d.\n", get_value_id);
- 
-}
-*/
 int main(void)
 {
     srand(time(NULL) * getpid()); // Inicialización adecuada de la semilla
-
     // Generación aleatoria de la operación y la clave
     int random_operation = rand() % 6;
     int random_key = (rand() % 5) + 1; // Clave en el rango de 1 a 10
-
     switch (random_operation)
     {
-    case 0:
-        printf("Operación 'init' para la clave %d\n del pid %d", random_key, getpid());
-        if (init() == -1){
-            fprintf(stderr, "Error en init para la clave %d\n del pid %d", random_key, getpid());
-        }
+    case 0: // Operación 'init'
+        printf("Cliente con pid %d, operación 'init'\n", getpid());
+        int init_result = init();
+        printf("Cliente con pid %d, resultado de la operación 'init' es %d\n", getpid(), init_result);
         break;
-    
     case 1: // Operación 'set'
-    {
+        printf("Cliente con pid %d, operación 'set_value'\n", getpid());
         double values[3] = {1.5, 2.5, 3.5};
-        printf("Operación 'set' para la clave %d\n del pid %d", random_key, getpid());
-        if (set_value(random_key, "value", 3, values) == -1){
-            fprintf(stderr, "Error en set_value para la clave %d\n del pid %d", random_key, getpid());
-        }
-    }
+        printf("Cliente con pid %d, la clave es %d y la tupla a insertar es {value, 3, [%f, %f, %f]}\n", getpid(), random_key, values[0], values[1], values[2]);
+        int set_value_result = set_value(random_key, "value", 3, (double *)values);
+        printf("Cliente con pid %d, resultado de la operación 'set_value' para la clave %d es %d\n", getpid(), random_key, set_value_result);
         break;
-    
     case 2: // Operación 'get'
-    {
+        printf("Cliente con pid %d, operación 'get_value' para la clave %d\n", getpid(), random_key);
         char value1[255];
         int N_value2;
         double V_value2[32];
-        printf("Operación 'get' para la clave %d\n del pid %d", random_key, getpid());
-        if (get_value(random_key, value1, &N_value2, V_value2) == -1){
-            fprintf(stderr, "Error en get_value para la clave %d\n", random_key);
+        int get_value_result = get_value(random_key, value1, &N_value2, V_value2);
+        printf("Cliente con pid %d, resultado de la operación 'get_value' para la clave %d es %d\n", getpid(), random_key, get_value_result);
+        if (get_value_result == 0) {
+            printf("Cliente con pid %d, la tupla devuelta para la clave %d es {%s, %d, [%f, %f, %f]}\n", getpid(), random_key, value1, N_value2, V_value2[0], V_value2[1], V_value2[2]);
         }
-
-
-    }
         break;
     case 3: //operacion modify
-        {
-        double values[3] = {1.5, 2.5, 3.5};
-        printf("Operación 'modify' para la clave %d\n del pid %d", random_key, getpid());
-        if (modify_value(random_key, "value2", 3, values) == -1) {
-            fprintf(stderr, "Error en modify_value para la clave %d\n", random_key);
-        }
-        }
+        printf("Cliente con pid %d, operación 'modify_value'\n", getpid());
+        double values_m[3] = {4.5, 5.5, 6.5};
+        printf("Cliente con pid %d, la clave es %d y la tupla por la que se va a sustituir es {value2, 3, [%f, %f, %f]}\n", getpid(), random_key, values_m[0], values_m[1], values_m[2]);
+        int modify_value_result = modify_value(random_key, "value", 3, (double *)values_m);
+        printf("Cliente con pid %d, resultado de la operación 'modify_value' para la clave %d es %d\n", getpid(), random_key, modify_value_result);
         break;
     case 4: // Operación 'delete'
-        printf("Operación 'delete' para la clave %d\n del pid %d", random_key, getpid());
-        if (delete_key(random_key) == -1){
-            fprintf(stderr, "Error en delete_key para la clave %d\n", random_key);
-        }
+        printf("Cliente con pid %d, operación 'delete_key' para la clave %d\n", getpid(), random_key);
+        int delete_key_result = delete_key(random_key);
+        printf("Cliente con pid %d, resultado de la operación 'delete_key' para la clave %d es %d\n", getpid(), random_key, delete_key_result);
         break;
     case 5: // Operación 'exist'
-        {
-            printf("Operación 'exist' para la clave %d\n del pid %d", random_key, getpid());
-            if (exist(random_key) == -1){
-                fprintf(stderr, "Clave no existente para la operación 'exist' en la clave %d\n", random_key);
-            }
-        }
+        printf("Cliente con pid %d, operación 'exist' para la clave %d\n", getpid(), random_key);
+        int exist_result = exist(random_key);
+        printf("Cliente con pid %d, resultado de la operación 'exist' para la clave %d es %d\n", getpid(), random_key, exist_result);
         break;
     }
-
-    printf("He terminado la función\n");
-
+    printf("Cliente con pid %d, he terminado la función\n", getpid());
     return 0;
 }
 

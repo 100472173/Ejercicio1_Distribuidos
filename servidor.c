@@ -262,7 +262,7 @@ int s_modify_value(int key, char *valor1, int valor2_N, double *valor2_value) {
             // modificar valores
             strcpy(almacen[i].valor1, valor1);
             almacen[i].valor2_N = valor2_N;
-            // // igualar todo el vector a 0
+            // igualar el vector a 0
             memset(almacen[i].valor2_value, 0, 32*sizeof(double));
             // copiar parametro a vector
             for (int j = 0; j<valor2_N; j++){
@@ -308,8 +308,6 @@ int s_exist(int key) {
     pthread_mutex_unlock(&almacen_mutex);
     // devolver existencia
     return existe;
-   
-    // falta la parte del error
 }
 
 void close_server(){
