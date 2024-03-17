@@ -9,13 +9,11 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <errno.h>
 #include <sys/stat.h>
 #include <signal.h>
-
 
 // mutex para copiar la peticion recibida a una variable local
 pthread_mutex_t sync_mutex;
@@ -23,34 +21,23 @@ bool sync_copied = false;
 pthread_cond_t sync_cond;
 // cola de servidor
 mqd_t queue_servidor;
-// mutex para hacer peticiones concurrentes. Escrituras en almacen
+// mutex para hacer peticiones concurrentes atómicas
 pthread_mutex_t almacen_mutex;
 
-
-
-
-/* La jugada es la siguiente. Primero vamos a inicializar en el main el almacen con espacio para max_tuplas.
- * Luego, cuando vayamos a añadir una tupla comprobamos si el almacen esta lleno, si está lleno duplicamos
- * la capacidad y hacemos un realloc para poder seguir metiendo tuplas. OJO MUCHO CUIDADO porque los accesos
- * tanto al almacen como a las variables que controlan el numero de elementos y la capacidad deberían estar
- * protegidas por algún mecanismo de sincronizacion y exlusión mutua. MIRAR ESTO MUY BIEN PARA NO LIARLA */
+// Almacen dinámico de tuplas
 struct tupla* almacen = NULL;
 // numero de elementos en el array
 int n_elementos = 0;
 // elmentos maximos del array
 int max_tuplas = 50;
 
-
-
-
-
 int main (){
     // Inicializamos el almacén
     almacen = (struct tupla*)malloc(max_tuplas*sizeof(struct tupla));
-    // senial para cerrar servidor
+    // signal para cerrar servidor
     signal(SIGINT, close_server);
-        // cargamos los datos del almacen
-        if (-1 == load()){
+    // cargamos los datos del almacen
+    if (-1 == load()) {
         fprintf(stderr, "Error en servidor al cargar el almacen del archivo binary\n");
         return -1;
     }
@@ -71,12 +58,13 @@ int main (){
     pthread_mutex_init(&sync_mutex, NULL);
     pthread_mutex_init(&almacen_mutex, NULL);
     pthread_cond_init(&sync_cond, NULL);
-    // Abrimos la cola para lectura
+    // Abrimos la cola del servidor para lectura
     queue_servidor = mq_open("/SERVIDOR", O_CREAT | O_RDONLY, 0700, &attr_servidor);
     if (queue_servidor == -1){
         perror("Error en servidor. Mq_open queue servidor");
         return -1;
     }
+    // Bucle infinito
     while (1) {
         if (mq_receive(queue_servidor, (char *)&p, sizeof(struct peticion), &prio) < 0) {
             perror("Error en servidor. Mq_recv");
@@ -114,7 +102,7 @@ void * tratar_peticion (void* pp){
     pthread_cond_signal(&sync_cond);
     pthread_mutex_unlock(&sync_mutex);
     
-    // En funcion de la operacion especificada en la operacion hacemos una u otra operacion
+    // En funcion de la operacion especificada en la peticion hacemos una u otra operacion
     switch (p_local.op){
     case 0:
         resp.status = s_init();
@@ -157,40 +145,20 @@ void * tratar_peticion (void* pp){
         mq_close(queue_cliente);
         mq_unlink(p_local.q_name);
     }
-
     return NULL;
-    // pthread_exit(0) ;
 }
 
 int s_init() {
     // mutex lock
     pthread_mutex_lock(&almacen_mutex);
     free(almacen);
-    // Cada vez que haces free del almacen y lo pones a 0. Cuando un nuevo servidor
-    // viene es posible que lo liberes a la vez que otro cliente esta borrando
-    // Ya pero en el otro no tienes mutex
     almacen = NULL;
     almacen = (struct tupla *)malloc(max_tuplas * sizeof(struct tupla));
     // poner a 0 todos los elementos del almacen
     size_t elementos = max_tuplas * sizeof(struct tupla);
     memset(almacen, 0, elementos);
-    // mutex unlock
-    // borar todas las tuplas del almacen
-    char file[MAX];
-    getcwd(file, sizeof(file));
-    strcat(file, "/data_structure/almacen.txt");
-    // abrir fichero y sobrescribir sus contenidos
-    FILE * f = fopen(file, "w");
-    // error al abrir el fichero
-    if (NULL == f){
-        perror("Error en servidor al abrir el fichero");
-        return -1;
-    }
-    fclose(f);
     pthread_mutex_unlock(&almacen_mutex);
-
     return 0;
-
 }
 
 int s_set_value(int key, char *valor1, int valor2_N, double *valor2_value) {
@@ -211,7 +179,6 @@ int s_set_value(int key, char *valor1, int valor2_N, double *valor2_value) {
         almacen = realloc(almacen, 2 * max_tuplas * sizeof(struct tupla));
         max_tuplas = max_tuplas * 2;
     }
-
     // crear tupla de insercion
     struct tupla insertar;
     insertar.clave = key;
@@ -257,7 +224,6 @@ int s_modify_value(int key, char *valor1, int valor2_N, double *valor2_value) {
     int existe = -1;
     for (int i = 0; i < n_elementos; i++){
         if (almacen[i].clave == key){
-            
             existe = 0;
             // modificar valores
             strcpy(almacen[i].valor1, valor1);
@@ -340,7 +306,6 @@ int load(){
     char file[MAX];
     strcpy(file, cwd);
     strcat(file, "/almacen.txt");
-
     // abrir descriptor de fichero
     FILE *f = fopen(file, "a+");
     rewind(f);
@@ -360,8 +325,7 @@ int load(){
         n_elementos++;
     }
     fclose(f);
-    /*
-    // reescribir el archibo el archivo
+    // eliminar lo que tenemos en el archivo al haberlo pasado al almacen dinamico
     FILE *f_erase = fopen(file, "w");
     // comprobar reescribiendo el fichero
     if (f_erase == NULL){
@@ -369,7 +333,6 @@ int load(){
         return -1;
     }
     fclose(f_erase);
-     */
     return 0;
 }
 int write_back(){
