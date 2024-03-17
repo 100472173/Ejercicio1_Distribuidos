@@ -98,16 +98,17 @@ int delete_key(int key);
  */
 int exist(int key);
 
-// funciones necesarias para clientes
+/** @brief Abre la cola del cliente. */
 void open_server(mqd_t * queue_servidor);
-
+/** @brief Abre la cola del servidor. */
 void open_client(mqd_t *queue_cliente, char *client_name);
-
+/** @brief Manda la peticion en la cola del servidor. */
 int send_server(mqd_t *queue_servidor, const char *message, int size, unsigned int prio);
-
+/** @brief Recibe la peticion en la cola del cliente. */
 int receive_client(mqd_t *queue_cliente, char *message, int size, unsigned int *prio);
-
+/** @brief Cierra todas las colas. */
 void close_queues(mqd_t *queue_servidor, mqd_t *queue_cliente, char *client_name);
+/** @brief Cierra la cola del cliente. */
 void close_client(mqd_t *queue_cliente, char *client_name);
 
 #endif //EJERCICIO1_DISTRIBUIDOS_CLAVES_H

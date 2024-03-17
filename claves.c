@@ -17,6 +17,7 @@ int init(){
     mqd_t queue_servidor;
     mqd_t queue_cliente;
     char client_name[MAX];
+    // abrir colas
     open_client(&queue_cliente, client_name);
     if (-1 == queue_cliente){
         perror("Error en cliente. Mq_open queue cliente");
@@ -58,6 +59,7 @@ int set_value(int key, char *value1, int N_value2, double *V_value2){
     mqd_t queue_servidor;
     mqd_t queue_cliente;
     char client_name[MAX];
+    // comprobar errores
     if (N_value2 < 1 || N_value2 > 32){
         fprintf(stderr, "Error: N_value2 no esta en el rango [1,32].\n");
         return -1;
@@ -66,6 +68,7 @@ int set_value(int key, char *value1, int N_value2, double *V_value2){
         fprintf(stderr, "Error: la cadena valor1 tiene mas de 256 caracteres.\n");
         return -1;
     }
+    // abrir colas
     open_client(&queue_cliente, client_name);
     if (-1 == queue_cliente){
         perror("Error en cliente. Mq_open queue cliente");
@@ -116,10 +119,7 @@ int get_value(int key, char *value1, int *N_value2, double *V_value2){
     mqd_t queue_servidor;
     mqd_t queue_cliente;
     char client_name[MAX];
-    if (strlen(value1)>MAX){
-        fprintf(stderr, "Error: la cadena valor1 tiene mas de 256 caracteres.\n");
-        return -1;
-    }
+    // abrir colas
     open_client(&queue_cliente, client_name);
     if (-1 == queue_cliente){
         perror("Error en cliente. Mq_open queue cliente");
@@ -168,6 +168,7 @@ int modify_value(int key, char *value1, int N_value2, double *V_value2){
     mqd_t queue_servidor;
     mqd_t queue_cliente;
     char client_name[MAX];
+    // comprobar errores
     if (N_value2 < 1 || N_value2 > 32){
         fprintf(stderr, "Error: N_value2 no esta en el rango [1,32].\n");
         return -1;
@@ -176,6 +177,7 @@ int modify_value(int key, char *value1, int N_value2, double *V_value2){
         fprintf(stderr, "Error: la cadena valor1 tiene mas de 256 caracteres.\n");
         return -1;
     }
+    // abrir colas
     open_client(&queue_cliente, client_name);
     if (-1 == queue_cliente){
         perror("Error en cliente. Mq_open queue cliente");
@@ -223,8 +225,8 @@ int delete_key(int key){
     mqd_t queue_servidor;
     mqd_t queue_cliente;
     char client_name[MAX];
+    // abrir colas
     open_client(&queue_cliente, client_name);
-
     if (-1 == queue_cliente){
         perror("Error en cliente. Mq_open queue cliente");
         return -1;
@@ -265,8 +267,8 @@ int exist(int key){
     mqd_t queue_servidor;
     mqd_t queue_cliente;
     char client_name[MAX];
+    // abrir colas
     open_client(&queue_cliente, client_name);
-
     if (-1 == queue_cliente){
         perror("Error en cliente. Mq_open queue cliente");
         return -1;
@@ -330,6 +332,7 @@ int receive_client(mqd_t *queue_cliente, char *message, int size, unsigned int *
     int receive = mq_receive(*queue_cliente, message, size, prio);
     return receive;
 }
+
 void close_queues(mqd_t *queue_servidor, mqd_t *queue_cliente, char *client_name){
     mq_close(*queue_servidor);
     mq_close(*queue_cliente);
